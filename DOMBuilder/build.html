@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<title>DOMbuilder.build()</title>
+<script src="../deps/js/codemirror/codemirror.js"></script>
+<link rel="stylesheet" href="../deps/css/codemirror/codemirror.css">
+<style>
+body {
+  line-height: 1.5;
+  max-width: 64.3em;
+  margin: 1em auto;
+  padding: 0 1em;
+}
+.CodeMirror {
+  border: 1px solid black;
+}
+#controls {
+  margin-top: 1em;
+}
+#output {
+  border: 1px solid black;
+  padding: 1em;
+}
+</style>
+<script src="../deps/js/codemirror/mode/javascript.js"></script>
+<script src="https://raw.github.com/insin/DOMBuilder/master/dist/DOMBuilder.js"></script>
+<script>
+var dom = DOMBuilder.dom
+var editor = null
+
+function doBuild() {
+  try {
+    var code = eval(editor.getValue())
+      , mode = document.forms['controlForm'].elements['mode'].value
+      , output = document.getElementById('output')
+    while (output.firstChild) {
+      output.removeChild(output.firstChild)
+    }
+
+    var built = DOMBuilder.build(code, mode)
+    if (mode == 'dom') {
+      output.appendChild(built)
+    }
+    else {
+      var html = built.toString(true)
+      output.innerHTML = html
+      built.addEvents()
+      output.insertBefore(
+        DOMBuilder.fragment(
+          dom.H2('HTML')
+        , dom.CODE(html)
+        , dom.H2('Inserted as ', dom.CODE('innerHTML'), ' (with event registration)')
+        )
+      , output.firstChild)
+    }
+  }
+  catch (e) {
+    console.log(e)
+  }
+}
+</script>
+
+<h1><a href="https://github.com/insin/DOMBuilder">DOMbuilder</a>.build()</h1>
+<p>Tags are specified as Arrays in which:</p>
+<ol>
+  <li>The first item is the <var>tagName</var>.</li>
+  <li>Attributes can be specified as an Object given as the second item.</li>
+  <li>Otherwise, all additional items are children.</li>
+</ol>
+<p>
+  The only exception to this is when specifying a DocumentFragment, which is
+  created if the first item in the Array is <code>'#document-fragment'</code>
+  &ndash; DocumentFragments cannot have attributes, so all additional items are
+  children.
+</p>
+<textarea id="code" name="code">['#document-fragment'
+, ['div', {'class': 'article'}
+  , ['h2', 'Article title']
+  , ['p', 'Paragraph one']
+  , ['p', 'Paragraph two']
+  ]
+, ['form'
+  , ['fieldset'
+    , ['legend', 'Things']
+    , ['input', {
+        blur: function() { alert('I now contain "' + this.value + '"') }
+      }]
+    ]
+  ]
+]</textarea>
+
+<form name="controlForm">
+<div id="controls">
+  <input id="build"type="button" onclick="doBuild()" value="DOMbuilder.build()">
+  using
+  <select name="mode" onchange="doBuild()">
+    <option value="dom" selected> DOM</label>
+    <option value="html"> HTML</label>
+  </select>
+  output mode.
+</div>
+</form>
+
+<h1>Output</h1>
+<div id="output"></div>
+
+<script>
+var editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+  mode: 'javascript'
+, lineNumbers: true
+, matchBrackets: true
+, smartIndent: false
+})
+doBuild()
+</script>
