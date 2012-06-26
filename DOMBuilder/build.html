@@ -59,18 +59,25 @@ function doBuild() {
 }
 </script>
 
-<h1><a href="https://github.com/insin/DOMBuilder">DOMBuilder</a>.build()</h1>
+<h1>
+  <a href="https://github.com/insin/DOMBuilder">DOMBuilder</a>.build()
+  [<a href="http://dombuilder.readthedocs.org/en/latest/core.html#building-from-arrays">docs</a>]
+</h1>
 <p>Tags are specified as Arrays in which:</p>
 <ol>
   <li>The first item is the <var>tagName</var>.</li>
-  <li>Attributes can be specified as an Object given as the second item.</li>
+  <li>
+    <a href="http://dombuilder.readthedocs.org/en/latest/dommode.html#attributes">Attributes</a>
+    can be specified as an Object given as the second item.
+  </li>
   <li>Otherwise, all additional items are children.</li>
 </ol>
 <p>
-  The only exception to this is when specifying a DocumentFragment, which is
-  created if the first item in the Array is <code>'#document-fragment'</code>
-  &ndash; DocumentFragments cannot have attributes, so all additional items are
-  children.
+  The only exception to this is when specifying a
+  <a href="http://dombuilder.readthedocs.org/en/latest/dommode.html#document-fragments">DocumentFragment</a>,
+  which is created if the first item in the Array is
+  <code>'#document-fragment'</code> &ndash; fragments cannot have attributes, so
+  all additional items are children.
 </p>
 <textarea id="code" name="code">['#document-fragment'
 , ['div', {'class': 'article'}
