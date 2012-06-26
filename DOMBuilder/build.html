@@ -43,6 +43,7 @@ function doBuild() {
       var html = built.toString(true)
       output.innerHTML = html
       built.addEvents()
+      // ...or we could have just done built.insertWithEvents(output) instead
       output.insertBefore(
         DOMBuilder.fragment(
           dom.H2('HTML')
