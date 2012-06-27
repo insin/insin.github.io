@@ -65,7 +65,11 @@ function doBuild() {
 </h1>
 <p>Tags are specified as Arrays in which:</p>
 <ol>
-  <li>The first item is the <var>tagName</var>.</li>
+  <li>
+    The first item is the <var>tagName</var>
+    (supporting <a href="http://jade-lang.com">Jade</a>-style id/class
+    definition, e.g. div#id.class1.class2)
+  </li>
   <li>
     <a href="http://dombuilder.readthedocs.org/en/latest/dommode.html#attributes">Attributes</a>
     can be specified as an Object given as the second item.
@@ -80,7 +84,7 @@ function doBuild() {
   all additional items are children.
 </p>
 <textarea id="code" name="code">['#document-fragment'
-, ['div', {'class': 'article'}
+, ['.article'
   , ['h2', 'Article title']
   , ['p', 'Paragraph one']
   , ['p', 'Paragraph two']
