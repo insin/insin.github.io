@@ -1,0 +1,32 @@
+body { font-family: arial, helvetica, sans-serif; font-size: 14px; }
+#about, #info { width: 66%; }
+.controls { padding: .5em 0; margin-top: 1em; }
+.link { cursor: pointer; color: blue; text-decoration: underline; }
+.controls .button, .controls input { cursor: pointer; color: blue; font-weight: bold; padding: .3em .6em; border: 1px solid black; border-radius: .5em; background-color: white; font-size: 1em; }
+/* Force same font for submit buttons */
+.controls input { font-family: arial, helvetica, sans-serif; }
+/* Adjust faux-button input heights to match submit buttons */
+.controls a.button { text-decoration: none; }
+.controls .button { padding-top: .4em; padding-bottom: .4em; }
+.controls .button:hover, .controls input:hover { background-color: black; color: yellow; }
+.controls .button:active, .controls input:active { background-color: black; color: #0f0; }
+.controls .add:hover { color: white; background-color: green; }
+.controls .delete:hover { color: white; background-color: red; }
+.controls .spacer { margin-left: .3em; margin-right: .3em; }
+/* Tables - common */
+table { border-spacing: 0; min-width: 66%; }
+th, td { padding: 5px 10px; }
+/* Tables - list view */
+table.list tr.odd td { }
+table.list tr.even td { background-color: #f9fbff; }
+table.list thead th { text-align: left; background-color: #69f; color: white; }
+table.list td { border-bottom: 1px solid #69f; }
+/* Tables - detail view/form layout */
+table.detail { border: 1px solid #36f; border-top-width: 3px; }
+tr.section td { font-weight: bold; background-color: #cdf; border-bottom: 1px solid white; }
+tbody th { text-align: right; border-bottom: 1px solid white; vertical-align: top; font-weight: normal; background-color: #f9f9ff; border-right: 1px solid #cdf; padding: 5px; }
+tr.required th { background-color: #cdf; }
+tr.error th { background-color: red; color: white; font-weight: bold; }
+/* Validation errors */
+ul.errorlist { margin: 0; padding: 0; list-style: none; }
+ul.errorlist li { margin-bottom: 5px; color: red; font-weight: bold; }
