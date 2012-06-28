@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base href="https://raw.github.com/insin/DOMBuilder/master/tests/">
+  <meta charset="UTF-8">
+  <title>DOMBuilder QUnit Tests</title>
+  <!-- Test framework -->
+  <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-git.css">
+  <script src="qunit/qunit.js"></script>
+  <!-- Code under test -->
+  <script src="../dist/DOMBuilder.template.js"></script>
+  <!-- Test cases -->
+  <script src="core.js"></script>
+  <script src="dom.js"></script>
+  <script src="html.js"></script>
+  <script src="mixedmode.js"></script>
+  <script src="template.js"></script>
+  <!-- Load jQuery last so DOMBuilder uses its own DOM mode compatibility -->
+  <script src="lib/jquery.min.js"></script>
+</head>
+<body>
+  <div id="qunit"></div>
+  <div id="qunit-fixture"></div>
+</body>
+</html>
