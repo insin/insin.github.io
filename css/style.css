@@ -1,0 +1,16 @@
+body {
+  line-height: 1.5;
+  max-width: 64.3em;
+  margin: 1em auto;
+  padding: 0 1em;
+}
+.CodeMirror {
+  border: 1px solid black;
+}
+#controls {
+  margin-top: 1em;
+}
+#output {
+  border: 1px solid black;
+  padding: 1em;
+}
