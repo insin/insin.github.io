@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <!-- To you -->
   <base href="https://raw.github.com/insin/DOMBuilder/master/tests/">
   <meta charset="UTF-8">
   <title>DOMBuilder QUnit Tests</title>
@@ -17,6 +18,8 @@
   <script src="template.js"></script>
   <!-- Load jQuery last so DOMBuilder uses its own DOM mode compatibility -->
   <script src="lib/jquery.min.js"></script>
+  <!-- To me -->
+  <script>document.getElementsByTagName('base')[0].href = location.href</script>
 </head>
 <body>
   <div id="qunit"></div>
