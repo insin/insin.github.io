@@ -169,23 +169,19 @@ var AddContact = React.createClass({displayName: 'AddContact',
       phoneNumberForms: new PhoneNumberFormSet({
         prefix: this.prefix('phone')
       , validation: 'auto'
-      , onStateChange: this.onFormStateChange
+      , onStateChange: this.forceUpdate.bind(this)
       })
     , emailAddressForms: new EmailAddressFormSet({
         prefix: this.prefix('email')
       , validation: 'auto'
-      , onStateChange: this.onFormStateChange
+      , onStateChange: this.forceUpdate.bind(this)
       })
     , addressForms: new AddressFormSet({
         prefix: this.prefix('address')
       , validation: 'auto'
-      , onStateChange: this.onFormStateChange
+      , onStateChange: this.forceUpdate.bind(this)
       })
     }
-  }
-
-, onFormStateChange: function() {
-    this.forceUpdate()
   }
 
 , prefix: function(formsetType) {
@@ -204,11 +200,11 @@ var AddContact = React.createClass({displayName: 'AddContact',
 
 , onSubmit: function(e) {
     e.preventDefault()
-    var data = forms.formData(this.refs.form.getDOMNode())
-    var areContactDetailsValid = all([this.state.phoneNumberForms.setData(data),
-                                      this.state.emailAddressForms.setData(data),
-                                      this.state.addressForms.setData(data)])
-    this.props.onSubmit(data, areContactDetailsValid)
+    var formData = forms.formData(this.refs.form)
+    var areContactDetailsValid = all([this.state.phoneNumberForms.setFormData(formData),
+                                      this.state.emailAddressForms.setFormData(formData),
+                                      this.state.addressForms.setFormData(formData)])
+    this.props.onSubmit(formData, areContactDetailsValid)
   }
 
 , render: function() {
@@ -288,18 +284,14 @@ var AddPerson = React.createClass({displayName: 'AddPerson',
       form: new PersonForm({
         prefix: 'person'
       , validation: 'auto'
-      , onStateChange: this.onFormStateChange
+      , onStateChange: this.forceUpdate.bind(this)
       })
     , cleanedData: false
     }
   }
 
-, onFormStateChange: function() {
-    this.forceUpdate()
-  }
-
-, onSubmit: function(data, areContactDetailsValid) {
-    var isPersonFormValid = this.state.form.setData(data)
+, onSubmit: function(formData, areContactDetailsValid) {
+    var isPersonFormValid = this.state.form.setFormData(formData)
     var cleanedData = false
     if (isPersonFormValid && areContactDetailsValid) {
       cleanedData = extend({
@@ -357,26 +349,22 @@ var AddOrganisation = React.createClass({displayName: 'AddOrganisation',
       form: new OrganisationForm({
         prefix: 'org'
       , validation: 'auto'
-      , onStateChange: this.onFormStateChange
+      , onStateChange: this.forceUpdate.bind(this)
       })
     , peopleForms: new InlinePersonFormSet({
         prefix: 'org'
       , validation: 'auto'
-      , onStateChange: this.onFormStateChange
+      , onStateChange: this.forceUpdate.bind(this)
       })
     , cleanedData: false
     }
   }
 
-, onFormStateChange: function() {
-    this.forceUpdate()
-  }
-
 , addAnother: addAnother
 
-, onSubmit: function(data, areContactDetailsValid) {
-    var isOrgFormValid = this.state.form.setData(data)
-    var arePeopleFormsValid = this.state.peopleForms.setData(data)
+, onSubmit: function(formData, areContactDetailsValid) {
+    var isOrgFormValid = this.state.form.setFormData(formData)
+    var arePeopleFormsValid = this.state.peopleForms.setFormData(formData)
     var cleanedData = false
     if (isOrgFormValid && arePeopleFormsValid && areContactDetailsValid) {
       cleanedData = extend({
@@ -453,7 +441,17 @@ var AddOrganisation = React.createClass({displayName: 'AddOrganisation',
           errors
         )
       })
-      return React.DOM.tr( {key:form.prefix}, cells)
+      var nonFieldErrors = form.nonFieldErrors().messages().map(function(message) {
+        return React.DOM.div( {className:"help-block"}, message)
+      })
+      var nonFieldErrorClass = nonFieldErrors.length > 0 ? 'has-non-field-error' : ''
+      var rows = [React.DOM.tr( {key:form.prefix, className:nonFieldErrorClass}, cells)]
+      if (nonFieldErrors.length > 0) {
+        rows.unshift(React.DOM.tr( {key:form.prefix + '-nonFieldErrors', className:"error-row"}, 
+          React.DOM.td( {colSpan:"6", className:"has-error"}, nonFieldErrors)
+        ))
+      }
+      return rows
     }.bind(this))
   }
 })
