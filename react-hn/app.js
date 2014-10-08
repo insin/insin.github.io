@@ -313,7 +313,7 @@ var Paginator = React.createClass({displayName: 'Paginator',
   render: function() {
     return React.DOM.div({className: "Paginator"},
       this.props.page > 1 && React.DOM.span({className: "Paginator__prev"},
-        Link({to: this.props.route, query: {page: this.props.page - 1}}, "Prev")
+        Link({to: this.props.route, query: {page: this.props.page - 1}}, "Prev"), " |"
       ), ' ',
       /** Always show next for now */
       React.DOM.span({className: "Paginator__next"},
@@ -327,6 +327,7 @@ var App = React.createClass({displayName: 'App',
   render: function() {
     return React.DOM.div({className: "App"},
       React.DOM.div({className: "App__header"},
+        React.DOM.a({href: "http://facebook.github.io/react/"}, React.DOM.img({src: "logo.png", width: "16", height: "16", alt: "React", title: "React website"})), ' ',
         Link({to: "news", className: "App__header__homelink"}, "React Hacker News")
       ),
       React.DOM.div({className: "App__content"},

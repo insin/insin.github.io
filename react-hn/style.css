@@ -1,6 +1,9 @@
 body {
   background-color: #fff;
 }
+img {
+  vertical-align: text-bottom;
+}
 
 .App {
   width: 90%;
@@ -14,7 +17,7 @@ body {
 .App__header {
   color: #00d8ff;
   background-color: #222;
-  padding: 4px 8px;
+  padding: 4px;
 }
 .App__header__homelink {
   text-decoration: none;
