@@ -43,6 +43,7 @@ parseUri.options = {
   }
 };
 
+var SITE_TITLE = 'React Hacker News'
 var ITEM_URL = 'https://hacker-news.firebaseio.com/v0/item/'
 var STORIES_PER_PAGE = 30
 
@@ -56,6 +57,15 @@ function parseHost(url) {
     parts.shift()
   }
   return parts.join('.')
+}
+
+function setTitle(title) {
+  if (title) {
+    document.title = title + ' | ' + SITE_TITLE
+  }
+  else {
+    document.title = SITE_TITLE
+  }
 }
 
 var NotFound = React.createClass({displayName: 'NotFound',
@@ -80,6 +90,11 @@ var User = React.createClass({displayName: 'User',
     }
     catch (e) {
       console.error('Error unbinding', e.message)
+    }
+  },
+  componentWillUpdate: function(nextProps, nextState) {
+    if (!this.state.user.id && nextState.user.id) {
+      setTitle('Profile: ' + nextState.user.id)
     }
   },
   render: function() {
@@ -175,6 +190,11 @@ var Story = React.createClass({displayName: 'Story',
       console.error('Error unbinding', e.message)
     }
   },
+  componentWillUpdate: function(nextProps, nextState) {
+    if (!this.state.story.id && nextState.story.id) {
+      setTitle(nextState.story.title)
+    }
+  },
   render: function() {
     var story = this.state.story
     if (!story.id) { return React.DOM.div({className: "Story Story--loading"}, "Loading...") }
@@ -251,6 +271,7 @@ var Stories = React.createClass({displayName: 'Stories',
   },
   componentWillMount: function() {
     this.bindAsObject(new Firebase('https://hacker-news.firebaseio.com/v0/topstories'), 'stories')
+    setTitle()
   },
   componentWillUnmount: function() {
     try {
