@@ -1,5 +1,7 @@
 /** @jsx React.DOM */
 
+void function() {
+
 'use strict';
 
 var Route = ReactRouter.Route
@@ -10,62 +12,30 @@ var NotFoundRoute = ReactRouter.NotFoundRoute
 
 var cx = React.addons.classSet
 
-// parseUri 1.2.2
-// (c) Steven Levithan <stevenlevithan.com>
-// MIT License
-
-function parseUri (str) {
-  var o   = parseUri.options,
-    m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
-    uri = {},
-    i   = 14;
-
-  while (i--) uri[o.key[i]] = m[i] || "";
-
-  uri[o.q.name] = {};
-  uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
-    if ($1) uri[o.q.name][$1] = $2;
-  });
-
-  return uri;
-};
-
-parseUri.options = {
-  strictMode: false,
-  key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
-  q:   {
-    name:   "queryKey",
-    parser: /(?:^|&)([^&=]*)=?([^&]*)/g
-  },
-  parser: {
-    strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-    loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
-  }
-};
-
 var SITE_TITLE = 'React Hacker News'
 var ITEM_URL = 'https://hacker-news.firebaseio.com/v0/item/'
+var USER_URL = 'https://hacker-news.firebaseio.com/v0/user/'
+var TOP_STORIES_URL = 'https://hacker-news.firebaseio.com/v0/topstories'
 var STORIES_PER_PAGE = 30
 
 function pluralise(n) {
   return (n == 1 ? '' : 's')
 }
 
-function parseHost(url) {
-  var parts = parseUri(url).host.split('.').slice(-3)
-  if (parts[0] === 'www') {
-    parts.shift()
+var parseHost = (function() {
+  var a = document.createElement('a')
+  return function(url) {
+    a.href = url
+    var parts = a.hostname.split('.').slice(-3)
+    if (parts[0] === 'www') {
+      parts.shift()
+    }
+    return parts.join('.')
   }
-  return parts.join('.')
-}
+})()
 
 function setTitle(title) {
-  if (title) {
-    document.title = title + ' | ' + SITE_TITLE
-  }
-  else {
-    document.title = SITE_TITLE
-  }
+  document.title = (title ? title + ' | ' + SITE_TITLE : SITE_TITLE)
 }
 
 var NotFound = React.createClass({
@@ -77,20 +47,10 @@ var NotFound = React.createClass({
 var User = React.createClass({
   mixins: [ReactFireMixin],
   getInitialState: function() {
-    return {
-      user: {}
-    }
+    return {user: {}}
   },
   componentWillMount: function() {
-    this.bindAsObject(new Firebase('https://hacker-news.firebaseio.com/v0/user/' + (this.props.id || this.props.params.id)), 'user')
-  },
-  componentWillUnmount: function() {
-    try {
-      this.unbind('user')
-    }
-    catch (e) {
-      console.error('Error unbinding', e.message)
-    }
+    this.bindAsObject(new Firebase(USER_URL + (this.props.id || this.props.params.id)), 'user')
   },
   componentWillUpdate: function(nextProps, nextState) {
     if (!this.state.user.id && nextState.user.id) {
@@ -123,14 +83,6 @@ var Comment = React.createClass({
   componentWillMount: function() {
     this.bindAsObject(new Firebase(ITEM_URL + (this.props.id || this.props.params.id)), 'comment')
   },
-  componentWillUnmount: function() {
-    try {
-      this.unbind('comment')
-    }
-    catch (e) {
-      console.error('Error unbinding', e.message)
-    }
-  },
   toggleCollapsed: function() {
     this.setState({collapsed: !this.state.collapsed})
   },
@@ -161,7 +113,7 @@ var Comment = React.createClass({
         <div dangerouslySetInnerHTML={{__html: comment.text}}/>
       </div>}
       {comment.kids && <div className="Comment__kids">
-        {comment.kids && comment.kids.map(function(id) {
+        {comment.kids.map(function(id) {
           return <Comment key={id} id={id}/>
         })}
       </div>}
@@ -177,20 +129,10 @@ var Comment = React.createClass({
 var Story = React.createClass({
   mixins: [ReactFireMixin],
   getInitialState: function() {
-    return {
-      story: {kids: []}
-    }
+    return {story: {}}
   },
   componentWillMount: function() {
     this.bindAsObject(new Firebase(ITEM_URL + (this.props.id || this.props.params.id)), 'story')
-  },
-  componentWillUnmount: function() {
-    try {
-      this.unbind('story')
-    }
-    catch (e) {
-      console.error('Error unbinding', e.message)
-    }
   },
   componentWillUpdate: function(nextProps, nextState) {
     if (!this.state.story.id && nextState.story.id) {
@@ -227,20 +169,10 @@ var Story = React.createClass({
 var ListStory = React.createClass({
   mixins: [ReactFireMixin],
   getInitialState: function() {
-    return {
-      story: {}
-    }
+    return {story: {}}
   },
   componentWillMount: function() {
     this.bindAsObject(new Firebase(ITEM_URL + this.props.id || this.props.params.id), 'story')
-  },
-  componentWillUnmount: function() {
-    try {
-      this.unbind('story')
-    }
-    catch (e) {
-      console.error('Error unbinding', e.message)
-    }
   },
   render: function() {
     var story = this.state.story
@@ -268,21 +200,11 @@ var ListStory = React.createClass({
 var Stories = React.createClass({
   mixins: [ReactFireMixin],
   getInitialState: function() {
-    return {
-      stories: []
-    }
+    return {stories: []}
   },
   componentWillMount: function() {
-    this.bindAsObject(new Firebase('https://hacker-news.firebaseio.com/v0/topstories'), 'stories')
+    this.bindAsObject(new Firebase(TOP_STORIES_URL), 'stories')
     setTitle()
-  },
-  componentWillUnmount: function() {
-    try {
-      this.unbind('stories')
-    }
-    catch (e) {
-      console.error('Error unbinding', e.message)
-    }
   },
   getPage: function() {
     return (this.props.query.page && /^\d+$/.test(this.props.query.page)
@@ -297,14 +219,15 @@ var Stories = React.createClass({
     var startIndex = (page - 1) * STORIES_PER_PAGE
     var endIndex = startIndex + STORIES_PER_PAGE
     var stories = this.state.stories.slice(startIndex, endIndex)
+    var hasNext = endIndex < this.state.stories.length - 1
     return <div className="Stories">
-      {page > 1 && <Paginator route="news" page={page}/>}
+      {page > 1 && <Paginator route="news" page={page} hasNext={hasNext}/>}
       <ol className="Stories__list" start={startIndex + 1}>
         {this.state.stories.slice(startIndex, endIndex).map(function(id, index) {
           return <ListStory key={id} id={id}/>
         })}
       </ol>
-      <Paginator route="news" page={page}/>
+      <Paginator route="news" page={page} hasNext={hasNext}/>
     </div>
   }
 })
@@ -313,12 +236,12 @@ var Paginator = React.createClass({
   render: function() {
     return <div className="Paginator">
       {this.props.page > 1 && <span className="Paginator__prev">
-        <Link to={this.props.route} query={{page: this.props.page - 1}}>Prev</Link> |
-      </span>}{' '}
-      {/** Always show next for now */}
-      <span className="Paginator__next">
+        <Link to={this.props.route} query={{page: this.props.page - 1}}>Prev</Link>
+      </span>}
+      {this.props.page > 1 && this.props.hasNext && ' | '}
+      {this.props.hasNext && <span className="Paginator__next">
         <Link to={this.props.route} query={{page: this.props.page + 1}}>More</Link>
-      </span>
+      </span>}
     </div>
   }
 })
@@ -349,3 +272,5 @@ var routes = <Routes location="hash">
 </Routes>
 
 React.renderComponent(routes, document.getElementById('app'))
+
+}()
