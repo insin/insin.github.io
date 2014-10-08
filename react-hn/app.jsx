@@ -94,7 +94,7 @@ var Comment = React.createClass({
   render: function() {
     var comment = this.state.comment || {}
     if (!comment.id) { return <div className="Comment Comment--loading"></div> }
-    if (comment.deleted && !comment.kids) { return }
+    if (comment.deleted && !comment.kids) { return null }
     var className = cx({
       'Comment': true
     , 'Comment--deleted': comment.deleted
@@ -203,7 +203,7 @@ var Item = React.createClass({
     var item = this.state.item
     if (!item.id) { return <div className="Item Item--loading"></div> }
     var timeMoment = moment(item.time * 1000)
-    return <div className="Item">
+    return <div className={cx({'Item': true, 'Item--dead': item.dead})}>
       {renderItemTitle(item)}
       {renderItemMeta(item)}
       {item.text && <div className="Item__text">
@@ -235,7 +235,7 @@ var ListItem = React.createClass({
     var item = this.state.item
     if (!item.id) { return <li className="ListItem ListItem--loading"></li> }
     var timeMoment = moment(item.time * 1000)
-    return <li className="ListItem">
+    return <li className={cx({'ListItem': true, 'ListItem--dead': item.dead})}>
       {renderItemTitle(item)}
       {renderItemMeta(item, true)}
     </li>

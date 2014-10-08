@@ -38,6 +38,9 @@ img {
 .Item {
   margin-bottom: 1em;
 }
+.Item__title {
+  color: #666;
+}
 .Item__title a {
   text-decoration: none;
   color: #000;
@@ -46,9 +49,6 @@ img {
   text-decoration: underline;
 }
 .Item__title a:visited {
-  color: #666;
-}
-.Item__host {
   color: #666;
 }
 .Item__meta {
