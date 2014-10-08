@@ -1,6 +1,7 @@
 body {
   background-color: #fff;
 }
+
 .App {
   width: 90%;
   max-width: 1280px;
@@ -11,13 +12,14 @@ body {
   font-family: Verdana, Geneva, sans-serif;
 }
 .App__header {
-  background-color: #f60;
+  color: #00d8ff;
+  background-color: #222;
   padding: 4px 8px;
 }
 .App__header__homelink {
   text-decoration: none;
-  color: #000;
   font-weight: bold;
+  color: inherit;
 }
 .App__content {
   padding: 8px 16px;
@@ -33,19 +35,59 @@ body {
 .Story {
   margin-bottom: 1em;
 }
+.Story__url a {
+  text-decoration: none;
+  color: #000;
+}
+.Story__url a:hover {
+  text-decoration: underline;
+}
+.Story__url a:visited {
+  color: #666;
+}
+.Story__host {
+  color: #666;
+}
+.Story__meta {
+  color: #666;
+}
+.Story__meta a {
+  text-decoration: none;
+  color: inherit;
+}
+.Story__meta a:hover {
+  text-decoration: underline;
+}
+.Story__by a {
+  font-weight: bold;
+}
 .Story__kids {
   padding-top: 1em;
 }
 
 .Comment {
-  margin-bottom: 1em;
+  margin-bottom: 1.5em;
 }
 .Comment--deleted {
   font-style: italic;
 }
+.Comment__meta {
+  color: #666;
+  margin-bottom: .5em
+}
+.Comment__meta a {
+  text-decoration: none;
+  color: inherit;
+}
+.Comment__meta a:hover {
+  text-decoration: underline;
+}
+.Comment__meta__user {
+  font-weight: bold;
+}
 .Comment__kids {
-  margin-top: 1em;
-  padding-left: 2em;
+  margin-top: 1.5em;
+  padding-left: 2.5em;
 }
 .Comment__collapse {
   cursor: pointer;
@@ -53,4 +95,22 @@ body {
 .Comment--collapsed > .Comment__text,
 .Comment--collapsed > .Comment__kids {
   display: none;
+}
+.Comment__text a {
+  color: #000;
+}
+.Comment__text a:visited {
+  color: #666;
+}
+.Comment--dead .Comment__text {
+  color: #ddd !important;
+}
+
+.Paginator a {
+  font-weight: bold;
+  color: #000;
+  text-decoration: none;
+}
+.Paginator a:hover {
+  text-decoration: underline;
 }

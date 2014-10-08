@@ -137,6 +137,7 @@ var Comment = React.createClass({displayName: 'Comment',
   render: function() {
     var comment = this.state.comment || {}
     if (!comment.id) { return React.DOM.div({className: "Comment Comment--loading"}, "Loading...") }
+    if (comment.deleted && !comment.kids) { return }
     var className = cx({
       'Comment': true
     , 'Comment--deleted': comment.deleted
@@ -147,13 +148,14 @@ var Comment = React.createClass({displayName: 'Comment',
     return React.DOM.div({className: className},
       comment.deleted && React.DOM.div({className: "Comment__meta"},
         this.renderCollapseControl(), ' ',
-        "[Deleted Comment]"
+        "[deleted]"
       ),
       !comment.deleted && React.DOM.div({className: "Comment__meta"},
         this.renderCollapseControl(), ' ',
-        Link({to: "user", params: {id: comment.by}}, comment.by), ' ',
+        Link({to: "user", params: {id: comment.by}, className: "Comment__meta__user"}, comment.by), ' ',
         timeMoment.fromNow(), ' ',
-        "| ", Link({to: "comment", params: {id: comment.id}}, "link")
+        "| ", Link({to: "comment", params: {id: comment.id}}, "link"),
+        comment.dead && React.DOM.span(null, " | [dead]")
       ),
       !comment.deleted && React.DOM.div({className: "Comment__text"},
         React.DOM.div({dangerouslySetInnerHTML: {__html: comment.text}})
@@ -201,16 +203,17 @@ var Story = React.createClass({displayName: 'Story',
     var timeMoment = moment(story.time * 1000)
     return React.DOM.div({className: "Story"},
       React.DOM.div({className: "Story__url"},
-        React.DOM.a({href: story.url}, story.title), " (", parseHost(story.url), ")"
+        React.DOM.a({href: story.url}, story.title), ' ',
+        React.DOM.span({className: "Story__host"}, "(", parseHost(story.url), ")")
       ),
       React.DOM.div({className: "Story__meta"},
-        React.DOM.span({className: "Story__meta__score"},
+        React.DOM.span({className: "Story__score"},
           story.score, " point", pluralise(story.score)
         ), ' ',
-        React.DOM.span({className: "Story__meta__by"},
+        React.DOM.span({className: "Story__by"},
           "by ", Link({to: "user", params: {id: story.by}}, story.by)
         ), ' ',
-        React.DOM.span({className: "Story__meta__time"}, timeMoment.fromNow())
+        React.DOM.span({className: "Story__time"}, timeMoment.fromNow())
       ),
       React.DOM.div({className: "Story__kids"},
         story.kids && story.kids.map(function(id) {
@@ -244,19 +247,19 @@ var ListStory = React.createClass({displayName: 'ListStory',
     if (!story.id) { return React.DOM.li({className: "ListStory ListStory--loading"}, "Loading...") }
     var timeMoment = moment(story.time * 1000)
     return React.DOM.li({className: "ListStory"},
-      React.DOM.div({className: "ListStory__url"},
-        React.DOM.a({href: story.url}, story.title), " (", parseHost(story.url), ")"
+      React.DOM.div({className: "Story__url"},
+        React.DOM.a({href: story.url}, story.title), ' ',
+        React.DOM.span({className: "Story__host"}, "(", parseHost(story.url), ")")
       ),
-      React.DOM.div({className: "ListStory__meta"},
-        React.DOM.span({className: "ListStory__meta__score"},
+      React.DOM.div({className: "Story__meta"},
+        React.DOM.span({className: "Story__score"},
           story.score, " point", pluralise(story.score)
         ), ' ',
-        React.DOM.span({className: "ListStory__meta__by"},
+        React.DOM.span({className: "Story__by"},
           "by ", Link({to: "user", params: {id: story.by}}, story.by)
         ), ' ',
-        React.DOM.span({className: "ListStory__meta__time"}, timeMoment.fromNow()), ' ',
-        React.DOM.span({className: "ListStory__meta__sep"}, "|"), ' ',
-        Link({to: "story", params: {id: story.id}}, "comments")
+        React.DOM.span({className: "Story__time"}, timeMoment.fromNow()), ' ',
+        "| ", Link({to: "story", params: {id: story.id}}, "comments")
       )
     )
   }
