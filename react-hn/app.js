@@ -15,8 +15,8 @@ var cx = React.addons.classSet
 var SITE_TITLE = 'React Hacker News'
 var ITEM_URL = 'https://hacker-news.firebaseio.com/v0/item/'
 var USER_URL = 'https://hacker-news.firebaseio.com/v0/user/'
-var TOP_STORIES_URL = 'https://hacker-news.firebaseio.com/v0/topstories'
-var STORIES_PER_PAGE = 30
+var TOP_ITEMS_URL = 'https://hacker-news.firebaseio.com/v0/topstories'
+var ITEMS_PER_PAGE = 30
 
 function pluralise(n) {
   return (n == 1 ? '' : 's')
@@ -59,12 +59,17 @@ var User = React.createClass({displayName: 'User',
   },
   render: function() {
     var user = this.state.user
-    if (!user.id) { return React.DOM.div({className: "User User--loading"}, "Loading...") }
+    if (!user.id) { return React.DOM.div({className: "User User--loading"}) }
+    var createdMoment = moment(user.created * 1000)
     return React.DOM.div({className: "User"},
       React.DOM.h4(null, user.id),
       React.DOM.dl(null,
+        React.DOM.dt(null, "Created"),
+        React.DOM.dd(null, createdMoment.fromNow(), " (", createdMoment.format('LL'), ")"),
         React.DOM.dt(null, "Karma"),
         React.DOM.dd(null, user.karma),
+        React.DOM.dt(null, "Delay"),
+        React.DOM.dd(null, user.delay),
         user.about && React.DOM.dt(null, "About"),
         user.about && React.DOM.dd(null, React.DOM.div({className: "User__about", dangerouslySetInnerHTML: {__html: user.about}}))
       )
@@ -88,7 +93,7 @@ var Comment = React.createClass({displayName: 'Comment',
   },
   render: function() {
     var comment = this.state.comment || {}
-    if (!comment.id) { return React.DOM.div({className: "Comment Comment--loading"}, "Loading...") }
+    if (!comment.id) { return React.DOM.div({className: "Comment Comment--loading"}) }
     if (comment.deleted && !comment.kids) { return }
     var className = cx({
       'Comment': true
@@ -126,39 +131,91 @@ var Comment = React.createClass({displayName: 'Comment',
   }
 })
 
-var Story = React.createClass({displayName: 'Story',
+var PollOption = React.createClass({displayName: 'PollOption',
   mixins: [ReactFireMixin],
   getInitialState: function() {
-    return {story: {}}
+    return {pollopt: {}}
   },
   componentWillMount: function() {
-    this.bindAsObject(new Firebase(ITEM_URL + (this.props.id || this.props.params.id)), 'story')
+    this.bindAsObject(new Firebase(ITEM_URL + this.props.id), 'pollopt')
+  },
+  render: function() {
+    var pollopt = this.state.pollopt
+    if (!pollopt.id) { return React.DOM.div({className: "PollOption PollOption--loading"}) }
+    return React.DOM.div({className: "PollOption"},
+      React.DOM.div({className: "PollOption__text"},
+        pollopt.text
+      ),
+      React.DOM.div({className: "PollOption__score"},
+        pollopt.score, " point", pluralise(pollopt.score)
+      )
+    )
+  }
+})
+
+function renderItemTitle(item) {
+  var hasURL = !!item.url
+  var title
+  if (item.dead) {
+    title = '[dead] ' + item.title
+  }
+  else {
+    title = (hasURL ? React.DOM.a({href: item.url}, item.title)
+                    : Link({to: item.type, params: {id: item.id}}, item.title))
+  }
+  return React.DOM.div({className: "Item__title"},
+    title,
+    hasURL && ' ',
+    hasURL && React.DOM.span({className: "Item__host"}, "(", parseHost(item.url), ")")
+  )
+}
+
+function renderItemMeta(item, commentsLink) {
+  var timeMoment = moment(item.time * 1000)
+  var isNotJob = (item.type != 'job')
+  return React.DOM.div({className: "Item__meta"},
+    isNotJob && React.DOM.span({className: "Item__score"},
+      item.score, " point", pluralise(item.score)
+    ), ' ',
+    isNotJob && React.DOM.span({className: "Item__by"},
+      "by ", Link({to: "user", params: {id: item.by}}, item.by)
+    ), ' ',
+    React.DOM.span({className: "Item__time"}, timeMoment.fromNow()),
+    isNotJob && commentsLink && ' | ',
+    isNotJob && commentsLink && Link({to: item.type, params: {id: item.id}}, "comments")
+  )
+}
+
+var Item = React.createClass({displayName: 'Item',
+  mixins: [ReactFireMixin],
+  getInitialState: function() {
+    return {item: {}}
+  },
+  componentWillMount: function() {
+    this.bindAsObject(new Firebase(ITEM_URL + (this.props.id || this.props.params.id)), 'item')
   },
   componentWillUpdate: function(nextProps, nextState) {
-    if (!this.state.story.id && nextState.story.id) {
-      setTitle(nextState.story.title)
+    if (!this.state.item.id && nextState.item.id) {
+      setTitle(nextState.item.title)
     }
   },
   render: function() {
-    var story = this.state.story
-    if (!story.id) { return React.DOM.div({className: "Story Story--loading"}, "Loading...") }
-    var timeMoment = moment(story.time * 1000)
-    return React.DOM.div({className: "Story"},
-      React.DOM.div({className: "Story__url"},
-        React.DOM.a({href: story.url}, story.title), ' ',
-        React.DOM.span({className: "Story__host"}, "(", parseHost(story.url), ")")
+    var item = this.state.item
+    if (!item.id) { return React.DOM.div({className: "Item Item--loading"}) }
+    var timeMoment = moment(item.time * 1000)
+    return React.DOM.div({className: "Item"},
+      renderItemTitle(item),
+      renderItemMeta(item),
+      item.text && React.DOM.div({className: "Item__text"},
+        React.DOM.div({dangerouslySetInnerHTML: {__html: item.text}})
       ),
-      React.DOM.div({className: "Story__meta"},
-        React.DOM.span({className: "Story__score"},
-          story.score, " point", pluralise(story.score)
-        ), ' ',
-        React.DOM.span({className: "Story__by"},
-          "by ", Link({to: "user", params: {id: story.by}}, story.by)
-        ), ' ',
-        React.DOM.span({className: "Story__time"}, timeMoment.fromNow())
+      item.type == 'poll' && React.DOM.div({className: "Item__poll"},
+        item.parts.map(function(id) {
+          return PollOption({key: id, id: id})
+        })
       ),
-      React.DOM.div({className: "Story__kids"},
-        story.kids && story.kids.map(function(id) {
+      item.kids && React.DOM.div({className: "Item__kids"},
+        item.kids.map(function(id) {
           return Comment({key: id, id: id})
         })
       )
@@ -166,44 +223,32 @@ var Story = React.createClass({displayName: 'Story',
   }
 })
 
-var ListStory = React.createClass({displayName: 'ListStory',
+var ListItem = React.createClass({displayName: 'ListItem',
   mixins: [ReactFireMixin],
   getInitialState: function() {
-    return {story: {}}
+    return {item: {}}
   },
   componentWillMount: function() {
-    this.bindAsObject(new Firebase(ITEM_URL + this.props.id || this.props.params.id), 'story')
+    this.bindAsObject(new Firebase(ITEM_URL + this.props.id || this.props.params.id), 'item')
   },
   render: function() {
-    var story = this.state.story
-    if (!story.id) { return React.DOM.li({className: "ListStory ListStory--loading"}, "Loading...") }
-    var timeMoment = moment(story.time * 1000)
-    return React.DOM.li({className: "ListStory"},
-      React.DOM.div({className: "Story__url"},
-        React.DOM.a({href: story.url}, story.title), ' ',
-        React.DOM.span({className: "Story__host"}, "(", parseHost(story.url), ")")
-      ),
-      React.DOM.div({className: "Story__meta"},
-        React.DOM.span({className: "Story__score"},
-          story.score, " point", pluralise(story.score)
-        ), ' ',
-        React.DOM.span({className: "Story__by"},
-          "by ", Link({to: "user", params: {id: story.by}}, story.by)
-        ), ' ',
-        React.DOM.span({className: "Story__time"}, timeMoment.fromNow()), ' ',
-        "| ", Link({to: "story", params: {id: story.id}}, "comments")
-      )
+    var item = this.state.item
+    if (!item.id) { return React.DOM.li({className: "ListItem ListItem--loading"}) }
+    var timeMoment = moment(item.time * 1000)
+    return React.DOM.li({className: "ListItem"},
+      renderItemTitle(item),
+      renderItemMeta(item, true)
     )
   }
 })
 
-var Stories = React.createClass({displayName: 'Stories',
+var Items = React.createClass({displayName: 'Items',
   mixins: [ReactFireMixin],
   getInitialState: function() {
-    return {stories: []}
+    return {items: []}
   },
   componentWillMount: function() {
-    this.bindAsObject(new Firebase(TOP_STORIES_URL), 'stories')
+    this.bindAsObject(new Firebase(TOP_ITEMS_URL), 'items')
     setTitle()
   },
   getPage: function() {
@@ -212,19 +257,19 @@ var Stories = React.createClass({displayName: 'Stories',
             : 1)
   },
   render: function() {
-    if (this.state.stories.length == 0) {
-      return React.DOM.div({className: "Stories Stories--loading"}, "Loading...")
+    if (this.state.items.length == 0) {
+      return React.DOM.div({className: "Items Items--loading"})
     }
     var page = this.getPage()
-    var startIndex = (page - 1) * STORIES_PER_PAGE
-    var endIndex = startIndex + STORIES_PER_PAGE
-    var stories = this.state.stories.slice(startIndex, endIndex)
-    var hasNext = endIndex < this.state.stories.length - 1
-    return React.DOM.div({className: "Stories"},
+    var startIndex = (page - 1) * ITEMS_PER_PAGE
+    var endIndex = startIndex + ITEMS_PER_PAGE
+    var items = this.state.items.slice(startIndex, endIndex)
+    var hasNext = endIndex < this.state.items.length - 1
+    return React.DOM.div({className: "Items"},
       page > 1 && Paginator({route: "news", page: page, hasNext: hasNext}),
-      React.DOM.ol({className: "Stories__list", start: startIndex + 1},
-        this.state.stories.slice(startIndex, endIndex).map(function(id, index) {
-          return ListStory({key: id, id: id})
+      React.DOM.ol({className: "Items__list", start: startIndex + 1},
+        this.state.items.slice(startIndex, endIndex).map(function(id, index) {
+          return ListItem({key: id, id: id})
         })
       ),
       Paginator({route: "news", page: page, hasNext: hasNext})
@@ -251,7 +296,7 @@ var App = React.createClass({displayName: 'App',
     return React.DOM.div({className: "App"},
       React.DOM.div({className: "App__header"},
         React.DOM.a({href: "http://facebook.github.io/react/"}, React.DOM.img({src: "logo.png", width: "16", height: "16", alt: "React", title: "React website"})), ' ',
-        Link({to: "news", className: "App__header__homelink"}, "React Hacker News")
+        Link({to: "news", className: "App__homelink"}, "React Hacker News")
       ),
       React.DOM.div({className: "App__content"},
         this.props.activeRouteHandler(null)
@@ -262,12 +307,15 @@ var App = React.createClass({displayName: 'App',
 
 var routes = Routes({location: "hash"},
   Route({name: "app", path: "/", handler: App},
-    DefaultRoute({handler: Stories}),
-    Route({name: "news", path: "news", handler: Stories}),
-    Route({name: "story", path: "story/:id", handler: Story}),
+    DefaultRoute({handler: Items}),
+    NotFoundRoute({handler: NotFound}),
+    Route({name: "news", path: "news", handler: Items}),
+    Route({name: "item", path: "item/:id", handler: Item}),
+    Route({name: "job", path: "job/:id", handler: Item}),
+    Route({name: "poll", path: "poll/:id", handler: Item}),
+    Route({name: "story", path: "story/:id", handler: Item}),
     Route({name: "comment", path: "comment/:id", handler: Comment}),
-    Route({name: "user", path: "user/:id", handler: User}),
-    NotFoundRoute({handler: NotFound})
+    Route({name: "user", path: "user/:id", handler: User})
   )
 )
 

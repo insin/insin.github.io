@@ -15,8 +15,8 @@ var cx = React.addons.classSet
 var SITE_TITLE = 'React Hacker News'
 var ITEM_URL = 'https://hacker-news.firebaseio.com/v0/item/'
 var USER_URL = 'https://hacker-news.firebaseio.com/v0/user/'
-var TOP_STORIES_URL = 'https://hacker-news.firebaseio.com/v0/topstories'
-var STORIES_PER_PAGE = 30
+var TOP_ITEMS_URL = 'https://hacker-news.firebaseio.com/v0/topstories'
+var ITEMS_PER_PAGE = 30
 
 function pluralise(n) {
   return (n == 1 ? '' : 's')
@@ -59,12 +59,17 @@ var User = React.createClass({
   },
   render: function() {
     var user = this.state.user
-    if (!user.id) { return <div className="User User--loading">Loading...</div> }
+    if (!user.id) { return <div className="User User--loading"></div> }
+    var createdMoment = moment(user.created * 1000)
     return <div className="User">
       <h4>{user.id}</h4>
       <dl>
+        <dt>Created</dt>
+        <dd>{createdMoment.fromNow()} ({createdMoment.format('LL')})</dd>
         <dt>Karma</dt>
         <dd>{user.karma}</dd>
+        <dt>Delay</dt>
+        <dd>{user.delay}</dd>
         {user.about && <dt>About</dt>}
         {user.about && <dd><div className="User__about" dangerouslySetInnerHTML={{__html: user.about}}/></dd>}
       </dl>
@@ -88,7 +93,7 @@ var Comment = React.createClass({
   },
   render: function() {
     var comment = this.state.comment || {}
-    if (!comment.id) { return <div className="Comment Comment--loading">Loading...</div> }
+    if (!comment.id) { return <div className="Comment Comment--loading"></div> }
     if (comment.deleted && !comment.kids) { return }
     var className = cx({
       'Comment': true
@@ -126,84 +131,124 @@ var Comment = React.createClass({
   }
 })
 
-var Story = React.createClass({
+var PollOption = React.createClass({
   mixins: [ReactFireMixin],
   getInitialState: function() {
-    return {story: {}}
+    return {pollopt: {}}
   },
   componentWillMount: function() {
-    this.bindAsObject(new Firebase(ITEM_URL + (this.props.id || this.props.params.id)), 'story')
-  },
-  componentWillUpdate: function(nextProps, nextState) {
-    if (!this.state.story.id && nextState.story.id) {
-      setTitle(nextState.story.title)
-    }
+    this.bindAsObject(new Firebase(ITEM_URL + this.props.id), 'pollopt')
   },
   render: function() {
-    var story = this.state.story
-    if (!story.id) { return <div className="Story Story--loading">Loading...</div> }
-    var timeMoment = moment(story.time * 1000)
-    return <div className="Story">
-      <div className="Story__url">
-        <a href={story.url}>{story.title}</a>{' '}
-        <span className="Story__host">({parseHost(story.url)})</span>
+    var pollopt = this.state.pollopt
+    if (!pollopt.id) { return <div className="PollOption PollOption--loading"></div> }
+    return <div className="PollOption">
+      <div className="PollOption__text">
+        {pollopt.text}
       </div>
-      <div className="Story__meta">
-        <span className="Story__score">
-          {story.score} point{pluralise(story.score)}
-        </span>{' '}
-        <span className="Story__by">
-          by <Link to="user" params={{id: story.by}}>{story.by}</Link>
-        </span>{' '}
-        <span className="Story__time">{timeMoment.fromNow()}</span>
-      </div>
-      <div className="Story__kids">
-        {story.kids && story.kids.map(function(id) {
-          return <Comment key={id} id={id}/>
-        })}
+      <div className="PollOption__score">
+        {pollopt.score} point{pluralise(pollopt.score)}
       </div>
     </div>
   }
 })
 
-var ListStory = React.createClass({
+function renderItemTitle(item) {
+  var hasURL = !!item.url
+  var title
+  if (item.dead) {
+    title = '[dead] ' + item.title
+  }
+  else {
+    title = (hasURL ? <a href={item.url}>{item.title}</a>
+                    : <Link to={item.type} params={{id: item.id}}>{item.title}</Link>)
+  }
+  return <div className="Item__title">
+    {title}
+    {hasURL && ' '}
+    {hasURL && <span className="Item__host">({parseHost(item.url)})</span>}
+  </div>
+}
+
+function renderItemMeta(item, commentsLink) {
+  var timeMoment = moment(item.time * 1000)
+  var isNotJob = (item.type != 'job')
+  return <div className="Item__meta">
+    {isNotJob && <span className="Item__score">
+      {item.score} point{pluralise(item.score)}
+    </span>}{' '}
+    {isNotJob && <span className="Item__by">
+      by <Link to="user" params={{id: item.by}}>{item.by}</Link>
+    </span>}{' '}
+    <span className="Item__time">{timeMoment.fromNow()}</span>
+    {isNotJob && commentsLink && ' | '}
+    {isNotJob && commentsLink && <Link to={item.type} params={{id: item.id}}>comments</Link>}
+  </div>
+}
+
+var Item = React.createClass({
   mixins: [ReactFireMixin],
   getInitialState: function() {
-    return {story: {}}
+    return {item: {}}
   },
   componentWillMount: function() {
-    this.bindAsObject(new Firebase(ITEM_URL + this.props.id || this.props.params.id), 'story')
+    this.bindAsObject(new Firebase(ITEM_URL + (this.props.id || this.props.params.id)), 'item')
+  },
+  componentWillUpdate: function(nextProps, nextState) {
+    if (!this.state.item.id && nextState.item.id) {
+      setTitle(nextState.item.title)
+    }
   },
   render: function() {
-    var story = this.state.story
-    if (!story.id) { return <li className="ListStory ListStory--loading">Loading...</li> }
-    var timeMoment = moment(story.time * 1000)
-    return <li className="ListStory">
-      <div className="Story__url">
-        <a href={story.url}>{story.title}</a>{' '}
-        <span className="Story__host">({parseHost(story.url)})</span>
-      </div>
-      <div className="Story__meta">
-        <span className="Story__score">
-          {story.score} point{pluralise(story.score)}
-        </span>{' '}
-        <span className="Story__by">
-          by <Link to="user" params={{id: story.by}}>{story.by}</Link>
-        </span>{' '}
-        <span className="Story__time">{timeMoment.fromNow()}</span>{' '}
-        | <Link to="story" params={{id: story.id}}>comments</Link>
-      </div>
+    var item = this.state.item
+    if (!item.id) { return <div className="Item Item--loading"></div> }
+    var timeMoment = moment(item.time * 1000)
+    return <div className="Item">
+      {renderItemTitle(item)}
+      {renderItemMeta(item)}
+      {item.text && <div className="Item__text">
+        <div dangerouslySetInnerHTML={{__html: item.text}}/>
+      </div>}
+      {item.type == 'poll' && <div className="Item__poll">
+        {item.parts.map(function(id) {
+          return <PollOption key={id} id={id}/>
+        })}
+      </div>}
+      {item.kids && <div className="Item__kids">
+        {item.kids.map(function(id) {
+          return <Comment key={id} id={id}/>
+        })}
+      </div>}
+    </div>
+  }
+})
+
+var ListItem = React.createClass({
+  mixins: [ReactFireMixin],
+  getInitialState: function() {
+    return {item: {}}
+  },
+  componentWillMount: function() {
+    this.bindAsObject(new Firebase(ITEM_URL + this.props.id || this.props.params.id), 'item')
+  },
+  render: function() {
+    var item = this.state.item
+    if (!item.id) { return <li className="ListItem ListItem--loading"></li> }
+    var timeMoment = moment(item.time * 1000)
+    return <li className="ListItem">
+      {renderItemTitle(item)}
+      {renderItemMeta(item, true)}
     </li>
   }
 })
 
-var Stories = React.createClass({
+var Items = React.createClass({
   mixins: [ReactFireMixin],
   getInitialState: function() {
-    return {stories: []}
+    return {items: []}
   },
   componentWillMount: function() {
-    this.bindAsObject(new Firebase(TOP_STORIES_URL), 'stories')
+    this.bindAsObject(new Firebase(TOP_ITEMS_URL), 'items')
     setTitle()
   },
   getPage: function() {
@@ -212,19 +257,19 @@ var Stories = React.createClass({
             : 1)
   },
   render: function() {
-    if (this.state.stories.length == 0) {
-      return <div className="Stories Stories--loading">Loading...</div>
+    if (this.state.items.length == 0) {
+      return <div className="Items Items--loading"></div>
     }
     var page = this.getPage()
-    var startIndex = (page - 1) * STORIES_PER_PAGE
-    var endIndex = startIndex + STORIES_PER_PAGE
-    var stories = this.state.stories.slice(startIndex, endIndex)
-    var hasNext = endIndex < this.state.stories.length - 1
-    return <div className="Stories">
+    var startIndex = (page - 1) * ITEMS_PER_PAGE
+    var endIndex = startIndex + ITEMS_PER_PAGE
+    var items = this.state.items.slice(startIndex, endIndex)
+    var hasNext = endIndex < this.state.items.length - 1
+    return <div className="Items">
       {page > 1 && <Paginator route="news" page={page} hasNext={hasNext}/>}
-      <ol className="Stories__list" start={startIndex + 1}>
-        {this.state.stories.slice(startIndex, endIndex).map(function(id, index) {
-          return <ListStory key={id} id={id}/>
+      <ol className="Items__list" start={startIndex + 1}>
+        {this.state.items.slice(startIndex, endIndex).map(function(id, index) {
+          return <ListItem key={id} id={id}/>
         })}
       </ol>
       <Paginator route="news" page={page} hasNext={hasNext}/>
@@ -251,7 +296,7 @@ var App = React.createClass({
     return <div className="App">
       <div className="App__header">
         <a href="http://facebook.github.io/react/"><img src="logo.png" width="16" height="16" alt="React" title="React website"/></a>{' '}
-        <Link to="news" className="App__header__homelink">React Hacker News</Link>
+        <Link to="news" className="App__homelink">React Hacker News</Link>
       </div>
       <div className="App__content">
         <this.props.activeRouteHandler/>
@@ -262,12 +307,15 @@ var App = React.createClass({
 
 var routes = <Routes location="hash">
   <Route name="app" path="/" handler={App}>
-    <DefaultRoute handler={Stories}/>
-    <Route name="news" path="news" handler={Stories}/>
-    <Route name="story" path="story/:id" handler={Story}/>
+    <DefaultRoute handler={Items}/>
+    <NotFoundRoute handler={NotFound}/>
+    <Route name="news" path="news" handler={Items}/>
+    <Route name="item" path="item/:id" handler={Item}/>
+    <Route name="job" path="job/:id" handler={Item}/>
+    <Route name="poll" path="poll/:id" handler={Item}/>
+    <Route name="story" path="story/:id" handler={Item}/>
     <Route name="comment" path="comment/:id" handler={Comment}/>
     <Route name="user" path="user/:id" handler={User}/>
-    <NotFoundRoute handler={NotFound}/>
   </Route>
 </Routes>
 

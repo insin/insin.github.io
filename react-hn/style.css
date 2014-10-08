@@ -19,7 +19,7 @@ img {
   background-color: #222;
   padding: 4px;
 }
-.App__header__homelink {
+.App__homelink {
   text-decoration: none;
   font-weight: bold;
   color: inherit;
@@ -28,44 +28,56 @@ img {
   padding: 8px 16px;
 }
 
-.Stories__list {
+.Items__list {
   padding-left: 30px;
 }
-.ListStory {
+.ListItem {
   margin-bottom: 10px;
 }
 
-.Story {
+.Item {
   margin-bottom: 1em;
 }
-.Story__url a {
+.Item__title a {
   text-decoration: none;
   color: #000;
 }
-.Story__url a:hover {
+.Item__title a:hover {
   text-decoration: underline;
 }
-.Story__url a:visited {
+.Item__title a:visited {
   color: #666;
 }
-.Story__host {
+.Item__host {
   color: #666;
 }
-.Story__meta {
+.Item__meta {
   color: #666;
 }
-.Story__meta a {
+.Item > .Item__meta {
+  margin-bottom: 1em;
+}
+.Item__meta a {
   text-decoration: none;
   color: inherit;
 }
-.Story__meta a:hover {
+.Item__meta a:hover {
   text-decoration: underline;
 }
-.Story__by a {
+.Item__by a {
   font-weight: bold;
 }
-.Story__kids {
-  padding-top: 1em;
+.Item__poll {
+  margin-top: 2em;
+  margin-bottom: 2em;
+  padding-left: 2em;
+}
+
+.PollOption {
+  margin-bottom: 10px;
+}
+.PollOption__score {
+  color: #666;
 }
 
 .Comment {
