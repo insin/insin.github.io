@@ -8,6 +8,7 @@ var Route = ReactRouter.Route
 var DefaultRoute = ReactRouter.DefaultRoute
 var Routes = ReactRouter.Routes
 var Link = ReactRouter.Link
+var Navigation = ReactRouter.Navigation
 var NotFoundRoute = ReactRouter.NotFoundRoute
 
 var cx = React.addons.classSet
@@ -50,11 +51,17 @@ var User = React.createClass({
     return {user: {}}
   },
   componentWillMount: function() {
-    this.bindAsObject(new Firebase(USER_URL + (this.props.id || this.props.params.id)), 'user')
+    this.bindAsObject(new Firebase(USER_URL + this.props.params.id), 'user')
   },
   componentWillUpdate: function(nextProps, nextState) {
-    if (!this.state.user.id && nextState.user.id) {
+    if (this.state.user.id != nextState.user.id) {
       setTitle('Profile: ' + nextState.user.id)
+    }
+  },
+  componentWillReceiveProps: function(nextProps) {
+    if (this.props.params.id != nextProps.params.id) {
+      this.unbind('user')
+      this.bindAsObject(new Firebase(USER_URL + nextProps.params.id), 'user')
     }
   },
   render: function() {
@@ -78,22 +85,48 @@ var User = React.createClass({
 })
 
 var Comment = React.createClass({
-  mixins: [ReactFireMixin],
+  mixins: [ReactFireMixin, Navigation],
   getInitialState: function() {
     return {
-      comment: null
+      comment: {}
     , collapsed: false
     }
   },
   componentWillMount: function() {
+    // TODO Look into manual binding as a solution for components which need to
+    //      redirect after loading an object, without setting it on state. This
+    //      requires checks in both componentWillUpdate() and render().
     this.bindAsObject(new Firebase(ITEM_URL + (this.props.id || this.props.params.id)), 'comment')
+  },
+  componentWillUpdate: function(nextProps, nextState) {
+    if (this.isTopLevel() && this.state.comment.id != nextState.comment.id) {
+      // Comment parent links point to the comment route - we need to redirect
+      // to the appropriate route if the parent link led to a non-comment item.
+      if (nextState.comment.type != 'comment') {
+        this.replaceWith(nextState.comment.type, {id: nextState.comment.id})
+        return
+      }
+      setTitle('Comment by ' + nextState.comment.by)
+    }
+  },
+  componentWillReceiveProps: function(nextProps) {
+    if (this.isTopLevel() && this.props.params.id != nextProps.params.id) {
+      this.unbind('comment')
+      this.bindAsObject(new Firebase(ITEM_URL + nextProps.params.id), 'comment')
+    }
+  },
+  isTopLevel: function() {
+    return !!this.props.params
   },
   toggleCollapsed: function() {
     this.setState({collapsed: !this.state.collapsed})
   },
   render: function() {
-    var comment = this.state.comment || {}
+    var comment = this.state.comment
     if (!comment.id) { return <div className="Comment Comment--loading"></div> }
+    // Don't render anything if we're replacing the route after loading a non-comment
+    if (comment.type != 'comment') { return null }
+    // Don't render anything for deleted comments with no kids
     if (comment.deleted && !comment.kids) { return null }
     var className = cx({
       'Comment': true
@@ -102,6 +135,7 @@ var Comment = React.createClass({
     , 'Comment--collapsed': this.state.collapsed
     })
     var timeMoment = moment(comment.time * 1000)
+    var isTopLevel = this.isTopLevel()
     return <div className={className}>
       {comment.deleted && <div className="Comment__meta">
         {this.renderCollapseControl()}{' '}
@@ -110,8 +144,11 @@ var Comment = React.createClass({
       {!comment.deleted && <div className="Comment__meta">
         {this.renderCollapseControl()}{' '}
         <Link to="user" params={{id: comment.by}} className="Comment__meta__user">{comment.by}</Link>{' '}
-        {timeMoment.fromNow()}{' '}
-        | <Link to="comment" params={{id: comment.id}}>link</Link>
+        {timeMoment.fromNow()}
+        {!isTopLevel && ' | '}
+        {!isTopLevel && <Link to="comment" params={{id: comment.id}}>link</Link>}
+        {isTopLevel && ' | '}
+        {isTopLevel && <Link to="comment" params={{id: comment.parent}}>parent</Link>}
         {comment.dead && <span> | [dead]</span>}
       </div>}
       {!comment.deleted && <div className="Comment__text">
@@ -195,8 +232,14 @@ var Item = React.createClass({
     this.bindAsObject(new Firebase(ITEM_URL + (this.props.id || this.props.params.id)), 'item')
   },
   componentWillUpdate: function(nextProps, nextState) {
-    if (!this.state.item.id && nextState.item.id) {
+    if (this.state.item.id != nextState.item.id) {
       setTitle(nextState.item.title)
+    }
+  },
+  componentWillReceiveProps: function(nextProps) {
+    if (this.props.params.id != nextProps.params.id) {
+      this.unbind('item')
+      this.bindAsObject(new Firebase(ITEM_URL + nextProps.params.id), 'item')
     }
   },
   render: function() {
