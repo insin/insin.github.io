@@ -106,8 +106,11 @@ span.control:hover {
   padding: 1em 1.25em 0 1.25em;
   margin-bottom: 1em;
 }
-.Update__notice {
+.Updates__notice {
   padding: 0 1.25em;
+}
+.Updates .Comment {
+  margin-bottom: .75em;
 }
 
 .Paginator {
@@ -182,7 +185,7 @@ span.control:hover {
 .Comment--deleted {
   font-style: italic;
 }
-.Comment--new {
+.Comment--new > .Comment__content {
   background-color: #ffffde;
 }
 /* Highlights a comment and its descendants on hover -- too distracting?
@@ -271,7 +274,7 @@ span.control:hover {
 .Comment__text p:last-child {
   margin-bottom: 0;
 }
-.Comment--dead .Comment__text {
+.Comment--dead > .Comment__content > .Comment__text {
   color: #ddd !important;
 }
 
