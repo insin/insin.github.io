@@ -1,8 +1,14 @@
 body {
   background-color: #fff;
 }
+form {
+  margin: 0;
+}
 img {
   vertical-align: text-bottom;
+}
+pre {
+  white-space: pre-wrap;
 }
 span.control {
   cursor: pointer;
@@ -61,6 +67,30 @@ span.control:hover {
   padding: 3px;
   line-height: 18px;
   vertical-align: middle;
+  position: relative;
+  border-top-right-radius: 1em;
+}
+.App__settings {
+  position: absolute;
+  top: 3px;
+  right: 10px;
+  cursor: pointer;
+}
+.Settings {
+  box-sizing: border-box;
+  padding: .75em;
+  position: absolute;
+  width: 36%%;
+  background-color: inherit;
+  right: 0;
+  border-bottom-left-radius: 1em;
+  border-bottom-right-radius: 1em;
+}
+.Settings p {
+  color: #fff;
+}
+.Settings div:last-child > p:last-child {
+  margin-bottom: 0;
 }
 .App__header img {
   border: 1px solid #00d8ff;
@@ -88,6 +118,8 @@ span.control:hover {
   color: #00d8ff;
   background-color: #222;
   padding: 4px;
+  border-bottom-left-radius: 1em;
+  border-bottom-right-radius: 1em;
 }
 .App__footer a {
   color: inherit;
@@ -185,6 +217,9 @@ span.control:hover {
   color: #666;
 }
 
+.PermalinkedComment > .Comment__content {
+  margin-bottom: 1em;
+}
 .Comment {
 }
 .Comment--new > .Comment__content {
