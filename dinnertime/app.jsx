@@ -86,7 +86,7 @@ function calculateSteps(items) {
     prevStep = step
   })
 
-  steps.push({type: 'finish', time: 0})
+  steps.push({type: 'finish', time: 0, instructions: 'Eat!'})
 
   return steps
 }
@@ -116,16 +116,34 @@ function announce(text) {
   }
 }
 
-function minutesAndSeconds(seconds) {
+function hhmmss(seconds) {
+  var hours = Math.floor(seconds / 3600)
   var mins = Math.floor(seconds / 60)
   var secs = seconds % 60
-  if (mins == 0) {
-    return secs + ' second' + pluralise(secs)
+  var parts = []
+  if (hours > 0) {
+    parts.push(hours)
   }
-  if (secs == 0) {
-    return mins + ' minute' + pluralise(mins)
+  parts.push(mins)
+  parts.push(secs < 10 ? '0' + secs : secs)
+  return parts.join(':')
+}
+
+function hoursMinutesSeconds(seconds) {
+  var hours = Math.floor(seconds / 3600)
+  var mins = Math.floor(seconds / 60)
+  var secs = seconds % 60
+  var parts = []
+  if (hours > 0) {
+    parts.push(hours + ' hour' + pluralise(hours))
   }
-  return mins + ' minute' + pluralise(mins) + ' ' + secs + ' second' + pluralise(secs)
+  if (mins > 0) {
+    parts.push(mins + ' minute' + pluralise(mins))
+  }
+  if (secs > 0) {
+    parts.push(secs + ' second' + pluralise(secs))
+  }
+  return parts.join(' ')
 }
 
 function makeObj(prop, value) {
@@ -249,19 +267,25 @@ var CookingTimer = React.createClass({
   },
 
   render: function() {
+    var prevSteps = this.props.steps.slice(0, this.state.stepIndex)
     var step = this.props.steps[this.state.stepIndex]
     var nextStep = this.props.steps[this.state.stepIndex + 1]
-    var timeToNextStep = this.state.timeRemaining - nextStep.time
     return <div className="CookingTimer">
-      <div className="CookingTimer__elapsed">
-        {minutesAndSeconds(this.state.timeElapsed)} elapsed
-      </div>
-      <div className="CookingTimer__step">
-        {linebreaks(step.instructions)}
-      </div>
-      <div className="CookingTimer__nextstep">
-        {minutesAndSeconds(this.state.timeToNextStep)} until next step
-      </div>
+      <h1>Dinner Time in {hoursMinutesSeconds(this.state.timeRemaining)}</h1>
+      {prevSteps.map(function(prevStep, index) {
+        return <h4 key={index} className="CookingTimer_prevstep">
+          DT minus {hhmmss(prevStep.time)} &ndash; {linebreaks(prevStep.instructions)}
+        </h4>
+      })}
+      <h2 className="CookingTimer__step">
+        DT minus {hhmmss(step.time)} &ndash; {linebreaks(step.instructions)}
+      </h2>
+      <h3 className="CookingTimer__nextstep">
+        Next step in {hoursMinutesSeconds(this.state.timeToNextStep)}:
+        <div className="CookingTimer__nextinstructions">
+          {linebreaks(nextStep.instructions)}
+        </div>
+      </h3>
       <button type="button" onClick={this.fastForward.bind(this, this.state.timeToNextStep)}>Fast-Forward</button>
       <audio ref="pips">
         <source src="pips.ogg" type="audio/ogg"/>
@@ -278,7 +302,7 @@ var TEST_ITEMS = [
 , {id: 'e', type: 'food', name: 'Beans', time: 5, flip: false, flipType: 'Flip'}
 ]
 
-var App = React.createClass({
+var DinnerTime = React.createClass({
   getInitialState: function() {
     return {
       appState: AppStates.INPUT
@@ -342,8 +366,7 @@ var App = React.createClass({
   },
 
   render: function() {
-    return <div className="App">
-      <h1>Dinner Time!</h1>
+    return <div className={'DinnerTime DinnerTime--' + this.state.appState}>
       {this.renderContent()}
     </div>
   },
@@ -362,18 +385,35 @@ var App = React.createClass({
 
   renderInput: function() {
     return <div className="Input">
-      {this.state.items.map(function(item, index) {
-        return <div className="Input__item" key={item.id} onChange={this.onChange.bind(this, index)}>
-          <label>Food: <input type="text" name="name" value={item.name}/></label>
-          <label>Cooking time: <input type="number" name="time" min="0" step="1" value={item.time}/></label>
-          <input type="checkbox" name="flip" checked={item.flip}/> <select value={item.flipType} name="flipType" disabled={!item.flip}>
-            <option>Flip</option>
-            <option>Rotate</option>
-          </select> half-way
-          <button type="button" onClick={this.deleteItem.bind(this, index)}>&times;</button>
-        </div>
-      }.bind(this))}
-      <button type="button" onClick={this.addItem}>+</button>
+      <h1>Dinner Time!</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Food</th>
+            <th>Cooking Time (mins)</th>
+            <th>Flip/Rotate?</th>
+            <th>&nbsp;</th>
+          </tr>
+        </thead>
+        <tbody>
+          {this.state.items.map(function(item, index) {
+            return <tr key={item.id} onChange={this.onChange.bind(this, index)}>
+              <td><input type="text" name="name" value={item.name}/></td>
+              <td><input type="number" name="time" min="0" step="1" value={item.time}/></td>
+              <td>
+                <input type="checkbox" name="flip" checked={item.flip}/>{' '}
+                {item.flip && <select value={item.flipType} name="flipType" disabled={!item.flip}>
+                  <option>Flip</option>
+                  <option>Rotate</option>
+                </select>}{' '}
+                {item.flip && 'halfway'}{/* TODO Make configurable */}
+              </td>
+              <td><button type="button" onClick={this.deleteItem.bind(this, index)} title="Remove this food">&times;</button></td>
+            </tr>
+          }.bind(this))}
+        </tbody>
+      </table>
+      <button type="button" onClick={this.addItem} title="Add more food">+</button>
       <p>Have you pre-heated all the things?</p>
       <button type="button" onClick={this.startCooking}>Start Cooking</button>
     </div>
@@ -381,9 +421,9 @@ var App = React.createClass({
 
   renderFinished: function() {
     return <div className="Finished">
-      <h1>Finished Cooking!</h1>
+      <h1>It's Dinner Time!</h1>
     </div>
   }
 })
 
-React.render(<App/>, document.getElementById('app'))
+React.render(<DinnerTime/>, document.getElementById('app'))
