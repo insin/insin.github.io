@@ -215,12 +215,14 @@ var App = React.createClass({displayName: 'App',
 
   _onSubmit:function(e) {
     e.preventDefault()
-    if (!this.state.form.validate()) {
-      this.forceUpdate()
-    }
-    else {
-      this.setState({submitted: this.state.form.cleanedData})
-    }
+    this.state.form.validate(function(err, isValid, cleanedData) {
+      if (isValid) {
+        this.setState({submitted: cleanedData})
+      }
+      else {
+        this.forceUpdate()
+      }
+    }.bind(this))
   },
 
   render:function() {
