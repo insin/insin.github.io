@@ -1,4 +1,4 @@
-'use strict';
+void function() { 'use strict';
 
 var CULTURE_SHIPS = [
   {id: 1, name: "5*Gelish-Oplule"}
@@ -253,75 +253,130 @@ var CULTURE_SHIPS = [
 , {id: 250, name: "Zoologist"}
 ]
 
-var App = React.createClass({
-  getInitialState: function() {
+var bootstrapClasses = {
+  filter: 'form-control'
+, select: 'form-control'
+, button: 'btn btn btn-block btn-default'
+}
+
+var BasicSelection = React.createClass({
+  getInitialState() {
     return {
       selectedShips: []
     }
   },
 
-  onMultiSelectChanged: function(selectedShips) {
+  onMultiSelectChanged(selectedShips) {
     selectedShips = selectedShips.slice()
-    selectedShips.sort(function(a, b) {
-      return a.id - b.id
-    })
+    selectedShips.sort((a, b) => a.id - b.id)
     this.setState({selectedShips: selectedShips})
   },
 
-  deselectShip: function(index) {
+  deselectShip(index) {
     var selectedShips = this.state.selectedShips.slice()
     selectedShips.splice(index, 1)
     this.setState({selectedShips: selectedShips})
   },
 
-  clearSelection: function() {
+  clearSelection() {
     this.setState({selectedShips: []})
   },
 
-  render: function() {
-    return <div className="container">
-      <div className="row header">
-        <div className="col-md-12">
-          <h1><a href="https://github.com/insin/react-filtered-multiselect">React &lt;FilteredMultiSelect/&gt;</a></h1>
-          <p className="lead">A reusable React component for making and adding to selections using a filtered multi-select.</p>
-          <p>Select some ships from <a href="http://en.wikipedia.org/wiki/The_Culture">The Culture</a>.</p>
-        </div>
+  render() {
+    var {selectedShips} = this.state
+    return <div className="row">
+      <div className="col-md-5">
+        <FilteredMultiSelect
+          classNames={bootstrapClasses}
+          onChange={this.onMultiSelectChanged}
+          options={CULTURE_SHIPS}
+          selectedOptions={selectedShips}
+          textProp="name"
+          valueProp="id"
+        />
+        <p className="help-block">Press Enter when there's only one matching item to select it.</p>
       </div>
-      <div className="row">
-        <div className="col-md-5">
-          <FilteredMultiSelect
-            classNames={{
-              filter: 'form-control'
-            , select: 'form-control'
-            , button: 'btn btn btn-block btn-default'
-            }}
-            onChange={this.onMultiSelectChanged}
-            options={CULTURE_SHIPS}
-            selectedOptions={this.state.selectedShips}
-            textProp="name"
-            valueProp="id"
-          />
-          <p className="help-block">Press Enter when there's only one matching item to select it.</p>
-        </div>
-        <div className="col-md-5">
-          {this.state.selectedShips.length === 0 && <p>(nothing selected yet)</p>}
-          {this.state.selectedShips.length > 0 && <ol>
-            {this.state.selectedShips.map(function(ship, i) {
-              return <li>
-                {ship.name}{' '}
-                <span style={{cursor: 'pointer'}} onClick={this.deselectShip.bind(null, i)}>
-                  &times;
-                </span>
-              </li>
-            }.bind(this))}
-          </ol>}
-          {this.state.selectedShips.length > 0 && <button style={{marginLeft: 20}} className="btn btn-default" onClick={this.clearSelection}>
-            Clear Selection
-          </button>}
-        </div>
+      <div className="col-md-5">
+        {selectedShips.length === 0 && <p>(nothing selected yet)</p>}
+        {selectedShips.length > 0 && <ol>
+          {selectedShips.map((ship, i) => {
+            return <li>
+              {ship.name}{' '}
+              <span style={{cursor: 'pointer'}} onClick={this.deselectShip.bind(null, i)}>
+                &times;
+              </span>
+            </li>
+          })}
+        </ol>}
+        {selectedShips.length > 0 && <button style={{marginLeft: 20}} className="btn btn-default" onClick={this.clearSelection}>
+          Clear Selection
+        </button>}
       </div>
     </div>
   }
 })
 
-React.render(<App/>, document.getElementById('app'))
+var MultiMultiSelects = React.createClass({
+  getInitialState() {
+    return {
+      selectedShips: []
+    }
+  },
+
+  onLeftMultiSelectChanged(selectedShips) {
+    selectedShips = selectedShips.slice()
+    selectedShips.sort((a, b) => a.id - b.id)
+    this.setState({selectedShips})
+  },
+
+  render() {
+    var {selectedShips} = this.state
+    return <div className="row">
+      <div className="col-md-5">
+        <FilteredMultiSelect
+          buttonText="Move"
+          classNames={bootstrapClasses}
+          onChange={this.onLeftMultiSelectChanged}
+          options={CULTURE_SHIPS}
+          selectedOptions={selectedShips}
+          textProp="name"
+          valueProp="id"
+        />
+      </div>
+      <div className="col-md-5">
+        <FilteredMultiSelect
+          classNames={bootstrapClasses}
+          onChange={function() {}}
+          options={selectedShips}
+          textProp="name"
+          valueProp="id"
+        />
+      </div>
+    </div>
+  }
+})
+
+var App = React.createClass({
+  render() {
+    return <div className="container">
+      <div className="row header">
+        <div className="col-md-12">
+          <h1><a href="https://github.com/insin/react-filtered-multiselect">React &lt;FilteredMultiSelect/&gt;</a></h1>
+          <p className="lead">A reusable React component for making and adding to selections using a filtered multi-select.</p>
+        </div>
+      </div>
+
+      <h2>Basic Selection</h2>
+      <p>Select some ships from <a href="http://en.wikipedia.org/wiki/The_Culture">The Culture</a>.</p>
+      <BasicSelection/>
+
+      <h2>Multiple MultiSelects</h2>
+      <p>Move items from one <code>&lt;FilteredMultiSelect/&gt;</code> to another</p>
+      <MultiMultiSelects/>
+    </div>
+  }
+})
+
+React.render(<App/>, document.body)
+
+}()

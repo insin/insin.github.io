@@ -1,5 +1,5 @@
 /**
- * react-filtered-multiselect 0.1.0 - https://github.com/insin/react-filtered-multiselect
+ * react-filtered-multiselect 0.2.0-alpha - https://github.com/insin/react-filtered-multiselect
  * MIT Licensed
  */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.FilteredMultiSelect=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
@@ -51,7 +51,7 @@ var FilteredMultiSelect = React.createClass({displayName: 'FilteredMultiSelect',
   , valueProp: React.PropTypes.string
   },
 
-  getDefaultProps: function() {
+  getDefaultProps:function() {
     return {
       buttonText: 'Select'
     , className: 'FilteredMultiSelect'
@@ -70,7 +70,7 @@ var FilteredMultiSelect = React.createClass({displayName: 'FilteredMultiSelect',
     }
   },
 
-  getInitialState: function() {
+  getInitialState:function() {
     return {
       // Filter text
       filter: this.props.defaultFilter
@@ -84,27 +84,38 @@ var FilteredMultiSelect = React.createClass({displayName: 'FilteredMultiSelect',
     }
   },
 
-  componentWillReceiveProps: function(nextProps) {
+  componentWillReceiveProps:function(nextProps) {
     if (nextProps.selectedOptions.length != this.state.selectedOptions.length) {
       this.setState({
-        filteredOptions: this.filterOptions(this.state.filter, nextProps.selectedOptions)
+        filteredOptions: this.filterOptions(this.state.filter,
+                                            nextProps.selectedOptions,
+                                            nextProps.options)
       , selectedOptions: nextProps.selectedOptions.slice()
+      })
+    }
+    else if (nextProps.options !== this.props.options ||
+             nextProps.options.length != this.props.options.length) {
+      this.setState({
+        filteredOptions: this.filterOptions(this.state.filter,
+                                            nextProps.selectedOptions,
+                                            nextProps.options)
       })
     }
   },
 
-  filterOptions: function(filter, selectedOptions) {
+  filterOptions:function(filter, selectedOptions, options) {
     if (typeof filter == 'undefined') {
       filter = this.state.filter
     }
     if (typeof selectedOptions == 'undefined') {
       selectedOptions = this.state.selectedOptions
     }
+    if (typeof options == 'undefined') {
+      options = this.props.options
+    }
     filter = filter.toUpperCase()
 
-    var options = this.props.options
-    var textProp = this.props.textProp
-    var valueProp = this.props.valueProp
+    var $__0=   this.props,textProp=$__0.textProp,valueProp=$__0.valueProp
     var selectedValueLookup = makeLookup(selectedOptions, valueProp)
     var filteredOptions = []
 
@@ -118,15 +129,13 @@ var FilteredMultiSelect = React.createClass({displayName: 'FilteredMultiSelect',
     return filteredOptions
   },
 
-  onFilterChange: function(e) {
+  onFilterChange:function(e) {
     var filter = e.target.value
-    this.setState({
-      filter: filter
-    , filteredOptions: this.filterOptions(filter)
+    this.setState({filter:filter, filteredOptions: this.filterOptions(filter)
     })
   },
 
-  onFilterKeyPress: function(e) {
+  onFilterKeyPress:function(e) {
     if (e.key == 'Enter') {
       e.preventDefault()
       if (this.state.filteredOptions.length == 1) {
@@ -135,13 +144,13 @@ var FilteredMultiSelect = React.createClass({displayName: 'FilteredMultiSelect',
         this.setState({
           filter: ''
         , filteredOptions: this.filterOptions('', selectedOptions)
-        , selectedOptions: selectedOptions
+        , selectedOptions:selectedOptions
         }, this.props.onChange.bind(null, selectedOptions))
       }
     }
   },
 
-  onSelectChange: function(e) {
+  onSelectChange:function(e) {
     var el = e.target
     var selectedValues = []
     for (var i = 0, l = el.options.length; i < l; i++) {
@@ -152,45 +161,44 @@ var FilteredMultiSelect = React.createClass({displayName: 'FilteredMultiSelect',
     this.setState({selectedValues: selectedValues})
   },
 
-  selectOptions: function(e) {
+  selectOptions:function(e) {
     var selectedOptions =
       this.state.selectedOptions.concat(getItemsByProp(this.state.filteredOptions,
                                                        this.props.valueProp,
                                                        this.state.selectedValues))
     this.setState({
       filteredOptions: this.filterOptions(this.state.filter, selectedOptions)
-    , selectedOptions: selectedOptions
+    , selectedOptions:selectedOptions
     , selectedValues: []
     }, this.props.onChange.bind(null, selectedOptions))
   },
 
-  render: function() {
-    var props = this.props
-    var state = this.state
-    return React.createElement("div", {className: props.className}, 
+  render:function() {
+    var $__0=   this,props=$__0.props,state=$__0.state
+    return React.createElement("div", {className: props.className},
       React.createElement("input", {
-         type: "text", 
-         className: props.classNames.filter, 
-         placeholder: props.placeholder, 
-         value: state.filter, 
-         onChange: this.onFilterChange, 
-         onKeyPress: this.onFilterKeyPress, 
+         type: "text",
+         className: props.classNames.filter,
+         placeholder: props.placeholder,
+         value: state.filter,
+         onChange: this.onFilterChange,
+         onKeyPress: this.onFilterKeyPress,
          disabled: props.disabled}
-      ), 
-      React.createElement("select", {multiple: true, 
-         className: props.classNames.select, 
-         size: props.size, 
-         value: state.selectedValues, 
-         onChange: this.onSelectChange, 
-         disabled: props.disabled}, 
-        this.state.filteredOptions.map(function(option) {
+      ),
+      React.createElement("select", {multiple: true,
+         className: props.classNames.select,
+         size: props.size,
+         value: state.selectedValues,
+         onChange: this.onSelectChange,
+         disabled: props.disabled},
+        this.state.filteredOptions.map(function(option)  {
           return React.createElement("option", {key: option[props.valueProp], value: option[props.valueProp]}, option[props.textProp])
         })
-      ), 
-      React.createElement("button", {type: "button", 
-         className: props.classNames.button, 
-         disabled: state.selectedValues.length === 0, 
-         onClick: this.selectOptions}, 
+      ),
+      React.createElement("button", {type: "button",
+         className: props.classNames.button,
+         disabled: state.selectedValues.length === 0,
+         onClick: this.selectOptions},
         this.props.buttonText
       )
     )
