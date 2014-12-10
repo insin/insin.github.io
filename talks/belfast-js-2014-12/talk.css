@@ -1,0 +1,144 @@
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Montserrat-Regular'), url("Montserrat-Regular.ttf")
+}
+
+body {
+  font-size: 200%;
+  text-align: center;
+  font-family: Montserrat;
+}
+
+blockquote {
+  border-left: .3em solid #222;
+  text-align: left;
+  padding: 1px 1em;
+  background-color: #222;
+  color: #00D8FF;
+  border-radius: 1em;
+}
+div.cite {
+  text-align: right;
+}
+.cite_label {
+  display: none;
+}
+
+button {
+  font-size: 1em;
+}
+
+dd, dl, dt {
+  text-align: left;
+}
+
+h1, h2, h3, h4 {
+  font-weight: normal;
+  margin-bottom: 0.3em;
+  margin-top: 0.3em;
+}
+
+input[type=text] {
+  font-size: 1em;
+}
+
+ol, ul {
+  text-align: left;
+}
+
+li {
+  margin-bottom: .75em;
+}
+
+li > ul {
+  margin-top: .5em;
+}
+
+pre {
+  text-align: left;
+  font-family: consolas, monospace;
+}
+
+tt {
+  font-family: consolas, monospace;
+  font-size: 1.1em;
+}
+
+.highlight {
+  border-top: 2px dashed #ccc;
+  border-bottom: 2px dashed #ccc;
+  padding: 6px 0;
+  font-size: 80%;
+}
+
+.highlight .err {
+  border: none;
+}
+
+#step-1 {
+  color: #00D8FF;
+}
+
+#justtheui a {
+  color: inherit;
+  cursor: inherit;
+  text-decoration: none;
+}
+
+#justthev {
+  min-height: 800px;
+  background-image: url("justthev.jpg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+
+#justthev a {
+  cursor: inherit;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+#omg {
+  min-height: 500px;
+  background-image: url("allthethings.png");
+  background-repeat: no-repeat;
+  background-position: bottom center;
+}
+
+body.impress-on-step-1 {
+  transition: background-color 1s ease;
+  background-color: #222;
+}
+body.impress-on-step-2 {
+  transition: background-color 1s ease;
+  background-color: #fff;
+}
+body.impress-on-justtheui {
+  transition: background-color 1s ease;
+  background-color: #fff;
+}
+body.impress-on-composition-example {
+  transition: background-color .5s ease;
+  background-color: #222;
+}
+body.impress-on-composition-example.lit {
+  background-color: #ddd;
+}
+body.impress-on-after-composition-example {
+  transition: background-color 1s ease;
+  background-color: #fff;
+}
+body.impress-on-justthev {
+  transition: background-color 1s ease;
+  background-color: #000;
+}
+body.impress-on-after-justthev {
+  transition: background-color 1s ease;
+  background-color: #fff;
+}
