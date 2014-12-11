@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>react-objecteditor</title>
+  <script src="http://fb.me/react-with-addons-0.12.1.js"></script>
+  <script src="http://fb.me/JSXTransformer-0.12.1.js"></script>
+  <script src="react-objecteditor.js"></script>
+  <style>
+  body {
+    font-family: consolas, monospace;
+  }
+  .editor {
+    float: left;
+  }
+  .floatainer {
+    overflow: hidden;
+  }
+  input.invalid {
+    color: #f00;
+  }
+  td {
+    vertical-align: top;
+  }
+  td.prop {
+    text-align: right;
+    padding-right: 5px;
+  }
+  .error {
+    color: #f00;
+  }
+  .line {
+    background-color:rgba(114, 191, 131, 0.1);
+  }
+  </style>
+</head>
+<body>
+  <h1><a href="https://github.com/insin/react-objecteditor">react-objecteditor</a></h1>
+  <p><strong>An &lt;ObjectEditor/&gt; React component.</strong></p>
+  <div id="app"></div>
+<script type="text/jsx;harmony=true">void function() {
+'use strict';
+
+var sampleObject = {
+  array: [true, new Date(), 123, /[a-z]\d{9}/i, 'abc']
+, boolean: true
+, date: new Date()
+, number: 123
+, object: {
+    array: [true, new Date(), 123, /[a-z]\d{9}/i, 'abc']
+  , boolean: true
+  , date: new Date()
+  , number: 123
+  , regexp: /[a-z]\d{9}/i
+  , string: 'abc'
+  }
+, regexp: /[a-z]\d{9}/i
+, string: 'abc'
+}
+
+var App = React.createClass({
+  getInitialState() {
+    return {
+      editing: true
+    , sampleObject: this.props.object
+    , editedObject: this.props.object
+    }
+  },
+
+  onToggleEditing(e) {
+    this.setState({editing: e.target.checked})
+  },
+
+  onChange(editedObject) {
+    this.setState({editedObject})
+  },
+
+  render() {
+    return <div>
+      <div className="floatainer">
+        <div className="editor">
+          <h2>Interactive <small><label><input type="checkbox" onChange={this.onToggleEditing} checked={this.state.editing}/> Edit</label></small></h2>
+          <ObjectEditor value={this.state.sampleObject} editing={this.state.editing} onChange={this.onChange}/>
+        </div>
+        <div className="editor">
+          <h2>onChange</h2>
+          <ObjectEditor value={this.state.editedObject}/>
+        </div>
+        <div className="editor">
+          <h2>Original</h2>
+          <ObjectEditor value={this.state.sampleObject}/>
+        </div>
+      </div>
+
+      <hr/>
+
+      <div className="floatainer">
+        <div className="editor">
+          <h2>Empty Object</h2>
+          <ObjectEditor value={{}} editing={true}/>
+        </div>
+      </div>
+    </div>
+  }
+})
+
+React.render(<App object={sampleObject}/>, document.getElementById('app'))
+
+}()</script>
+</body>
