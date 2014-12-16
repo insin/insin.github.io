@@ -26,7 +26,7 @@
   <div class="container">
   <h2>JSX source:</h2>
   <pre><code>&lt;Container&gt;
-  &lt;h5&gt;Rendered output:&lt;/h5&gt;
+  &lt;h2&gt;Rendered output:&lt;/h2&gt;
   &lt;Row&gt;
     &lt;Col xs="12" md="8"&gt;&lt;code&gt;xs="12" md="8"&lt;/code&gt;&lt;/Col&gt;
     &lt;Col xs="6" md="4"&gt;&lt;code&gt;xs="6" md="4"&lt;/code&gt;&lt;/Col&gt;
@@ -51,44 +51,20 @@
   <h2>Components generated with:</h2>
   <pre><code>var colSizeRE = /^(?:[1-9]|1[0-2])$/
 
-function col(type, size) {
-  if (size) {
-    if (!colSizeRE.test(size)) {
-      throw new Error(`Invalid size for Col: ${type}=${size}`)
-    }
-    return `col-${type}-${size}`
-  }
-}
-
-function offset(type, size) {
-  if (size) {
-    if (!colSizeRE.test(size)) {
-      throw new Error(`Invalid offset for Col: ${type}Offset=${size}`)
-    }
-    return `col-${type}-offset-${size}`
-  }
-}
-
 var bootstrap = {
   components: {
-    'Container(fluid)': 'div.container{fluid(fluid)}'
+    'Container(fluid)': 'div.{container(fluid)}'
   , 'Row': 'div.row'
   , 'Col(xs, sm, md, lg, xsOffset, smOffset, mdOffset, lgOffset)':
-    'div.{xsC(xs)}.{smC(sm)}.{mdC(md)}.{lgC(lg)}.{xsO(xsOffset)}.{smO(smOffset)}.{mdO(mdOffset)}.{lgO(lgOffset)}'
+      `div.col-xs-{xs}.col-sm-{sm}.col-md-{md}.col-lg-{lg}
+          .col-xs-offset-{xsOffset}.col-sm-offset-{smOffset}
+          .col-md-offset-{mdOffset}.col-lg-offset-{lgOffset}`
   },
 
   functions: {
-    fluid(fluid) {
-      return fluid ? '-fluid' : ''
-    },
-    xsC: col.bind(null, 'xs'),
-    smC: col.bind(null, 'sm'),
-    mdC: col.bind(null, 'md'),
-    lgC: col.bind(null, 'lg'),
-    xsO: offset.bind(null, 'xs'),
-    smO: offset.bind(null, 'sm'),
-    mdO: offset.bind(null, 'md'),
-    lgO: offset.bind(null, 'lg')
+    container(fluid) {
+      return fluid ? 'container-fluid' : 'container'
+    }
   }
 }
 
@@ -100,51 +76,27 @@ var {Container, Row, Col} = ReactDSL(bootstrap)</code></pre>
 
 var colSizeRE = /^(?:[1-9]|1[0-2])$/
 
-function col(type, size) {
-  if (size) {
-    if (!colSizeRE.test(size)) {
-      throw new Error(`Invalid size for Col: ${type}=${size}`)
-    }
-    return `col-${type}-${size}`
-  }
-}
-
-function offset(type, size) {
-  if (size) {
-    if (!colSizeRE.test(size)) {
-      throw new Error(`Invalid offset for Col: ${type}Offset=${size}`)
-    }
-    return `col-${type}-offset-${size}`
-  }
-}
-
 var bootstrap = {
   components: {
-    'Container(fluid)': 'div.container{fluid(fluid)}'
+    'Container(fluid)': 'div.{container(fluid)}'
   , 'Row': 'div.row'
   , 'Col(xs, sm, md, lg, xsOffset, smOffset, mdOffset, lgOffset)':
-    'div.{xsC(xs)}.{smC(sm)}.{mdC(md)}.{lgC(lg)}.{xsO(xsOffset)}.{smO(smOffset)}.{mdO(mdOffset)}.{lgO(lgOffset)}'
+      `div.col-xs-{xs}.col-sm-{sm}.col-md-{md}.col-lg-{lg}
+          .col-xs-offset-{xsOffset}.col-sm-offset-{smOffset}
+          .col-md-offset-{mdOffset}.col-lg-offset-{lgOffset}`
   },
 
   functions: {
-    fluid(fluid) {
-      return fluid ? '-fluid' : ''
-    },
-    xsC: col.bind(null, 'xs'),
-    smC: col.bind(null, 'sm'),
-    mdC: col.bind(null, 'md'),
-    lgC: col.bind(null, 'lg'),
-    xsO: offset.bind(null, 'xs'),
-    smO: offset.bind(null, 'sm'),
-    mdO: offset.bind(null, 'md'),
-    lgO: offset.bind(null, 'lg')
+    container(fluid) {
+      return fluid ? 'container-fluid' : 'container'
+    }
   }
 }
 
 var {Container, Row, Col} = ReactDSL(bootstrap)
 
 React.render(<Container>
-  <h5>Rendered output:</h5>
+  <h2>Rendered output:</h2>
   <Row>
     <Col xs="12" md="8"><code>xs="12" md="8"</code></Col>
     <Col xs="6" md="4"><code>xs="6" md="4"</code></Col>
