@@ -1,5 +1,5 @@
 /*!
- * react-split-date-input 1.0.0 (dev build at Sat, 27 Dec 2014 01:39:05 GMT) - https://github.com/insin/react-split-date-input
+ * react-split-date-input 1.0.0 (dev build at Sat, 27 Dec 2014 19:04:46 GMT) - https://github.com/insin/react-split-date-input
  * MIT Licensed
  */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.SplitDateInput=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
@@ -22,6 +22,16 @@ function daysInMonth(month, year) {
 }
 
 var SplitDateInput = React.createClass({displayName: "SplitDateInput",
+  statics: {
+    valueFromData:function(data, files, name) {
+      var $__0=    'year month day'.split(' ').map(function(f)  {return (name + "_" + f);}),year=$__0[0],month=$__0[1],day=$__0[2]
+      if (!data[year] || !data[month] || !data[day]) {
+        return ''
+      }
+      return (data[year] + "-" + data[month] + "-" + data[day])
+    }
+  },
+
   propTypes: {
     name: React.PropTypes.string
   , onChange: React.PropTypes.func.isRequired
@@ -40,12 +50,27 @@ var SplitDateInput = React.createClass({displayName: "SplitDateInput",
     }
     return {
       month: date.getMonth()
-    , monthText: MONTH_NAMES[date.getMonth()]
-    , day: date.getDate()
-    , dayText: String(date.getDate())
     , year: date.getFullYear()
+    , day: date.getDate()
+    // Separate *Text state for input values allow the user to type whatever
+    // they want, including invalid values. If an invalid value is present
+    // onBlur, we will replace it.
+    , monthText: MONTH_NAMES[date.getMonth()]
+    , dayText: String(date.getDate())
     , yearText: String(date.getFullYear())
     }
+  },
+
+  // Shared
+  // ======
+
+  onInputFocus:function(e) {
+    e.target.select()
+  },
+
+  triggerChange:function() {
+    var $__0=    this.state,year=$__0.year,month=$__0.month,day=$__0.day
+    this.props.onChange(new Date(year, month, day))
   },
 
   getAdjustedDay:function(month, year) {
@@ -53,24 +78,14 @@ var SplitDateInput = React.createClass({displayName: "SplitDateInput",
     return this.state.day > daysInNewMonth ? daysInNewMonth : this.state.day
   },
 
+  // Month
+  // =====
+
   decreaseMonth:function() {
     var month = this.state.month === 0 ? 11 : this.state.month - 1
     var day = this.getAdjustedDay(month, this.state.year)
     var monthText = MONTH_NAMES[month]
     this.setState({day:day, dayText: String(day), month:month, monthText:monthText}, this.triggerChange)
-  },
-
-  decreaseDay:function() {
-    var day = (this.state.day === 1
-               ? daysInMonth(this.state.month, this.state.year)
-               : this.state.day - 1)
-    this.setState({day:day, dayText: String(day)}, this.triggerChange)
-  },
-
-  decreaseYear:function() {
-    var year = this.state.year - 1
-    var day = this.getAdjustedDay(this.state.month, year)
-    this.setState({day:day, dayText: String(day), year:year, yearText: String(year)}, this.triggerChange)
   },
 
   increaseMonth:function() {
@@ -80,17 +95,10 @@ var SplitDateInput = React.createClass({displayName: "SplitDateInput",
     this.setState({day:day, dayText: String(day), month:month, monthText:monthText}, this.triggerChange)
   },
 
-  increaseDay:function() {
-    var day = (this.state.day === daysInMonth(this.state.month, this.state.year)
-               ? 1
-               : this.state.day + 1)
-    this.setState({day:day, dayText: String(day)}, this.triggerChange)
-  },
-
-  increaseYear:function() {
-    var year = this.state.year + 1
-    var day = this.getAdjustedDay(this.state.month, year)
-    this.setState({day:day, dayText: String(day), year:year, yearText: String(year)}, this.triggerChange)
+  onMonthBlur:function(e) {
+    if (this.state.monthText != MONTH_NAMES[this.state.month]) {
+      this.setState({monthText: MONTH_NAMES[this.state.month]})
+    }
   },
 
   onMonthChange:function(e) {
@@ -105,9 +113,44 @@ var SplitDateInput = React.createClass({displayName: "SplitDateInput",
     }
   },
 
-  onMonthBlur:function(e) {
-    if (this.state.monthText != MONTH_NAMES[this.state.month]) {
-      this.setState({monthText: MONTH_NAMES[this.state.month]})
+  onMonthKeyDown:function(e) {
+    if ((e.key == 'ArrowDown' || e.key == 'ArrowUp') &&
+        e.target.value in MONTH_NAME_LOOKUP) {
+      e.preventDefault()
+      if (e.key == 'ArrowUp') {
+        this.increaseMonth()
+      }
+      else {
+        this.decreaseMonth()
+      }
+    }
+  },
+
+  // Day
+  // ===
+
+  increaseDay:function() {
+    var day = (this.state.day === daysInMonth(this.state.month, this.state.year)
+               ? 1
+               : this.state.day + 1)
+    this.setState({day:day, dayText: String(day)}, this.triggerChange)
+  },
+
+  decreaseDay:function() {
+    var day = (this.state.day === 1
+               ? daysInMonth(this.state.month, this.state.year)
+               : this.state.day - 1)
+    this.setState({day:day, dayText: String(day)}, this.triggerChange)
+  },
+
+  onDayKeyDown:function(e) {
+    if (e.key == 'ArrowUp') {
+      e.preventDefault()
+      this.increaseDay()
+    }
+    else if (e.key == 'ArrowDown') {
+      e.preventDefault()
+      this.decreaseDay()
     }
   },
 
@@ -125,6 +168,32 @@ var SplitDateInput = React.createClass({displayName: "SplitDateInput",
   onDayBlur:function(e) {
     if (this.state.dayText != String(this.state.day)) {
       this.setState({dayText: String(this.state.day)})
+    }
+  },
+
+  // Year
+  // ====
+
+  increaseYear:function() {
+    var year = this.state.year + 1
+    var day = this.getAdjustedDay(this.state.month, year)
+    this.setState({day:day, dayText: String(day), year:year, yearText: String(year)}, this.triggerChange)
+  },
+
+  decreaseYear:function() {
+    var year = this.state.year - 1
+    var day = this.getAdjustedDay(this.state.month, year)
+    this.setState({day:day, dayText: String(day), year:year, yearText: String(year)}, this.triggerChange)
+  },
+
+  onYearKeyDown:function(e) {
+    if (e.key == 'ArrowUp') {
+      e.preventDefault()
+      this.increaseYear()
+    }
+    else if (e.key == 'ArrowDown') {
+      e.preventDefault()
+      this.decreaseYear()
     }
   },
 
@@ -146,31 +215,38 @@ var SplitDateInput = React.createClass({displayName: "SplitDateInput",
     }
   },
 
-  triggerChange:function() {
-    var $__0=    this.state,year=$__0.year,month=$__0.month,day=$__0.day
-    this.props.onChange(new Date(year, month, day))
-  },
-
   render:function() {
     var name = this.props.name
-    return React.createElement("div", {className: "SplitDateInput"}, 
-      React.createElement("div", {className: "SplitDateInput__part SplitDateInput__month"}, 
-        React.createElement("button", {type: "button", onClick: this.increaseMonth, tabIndex: "2"}, "+"), 
-        React.createElement("datalist", {id: name + '-months'}, 
+    return React.createElement("div", {className: "SplitDateInput"},
+      React.createElement("div", {className: "SplitDateInput__part SplitDateInput__month"},
+        React.createElement("button", {type: "button", onClick: this.increaseMonth, tabIndex: "2"}, "+"),
+        React.createElement("datalist", {id: (name + "-months")},
           MONTH_NAMES.map(function(month)  {return React.createElement("option", {value: month, key: month});})
-        ), 
-        React.createElement("input", {type: "text", name: name + '_month', value: this.state.monthText, onChange: this.onMonthChange, onBlur: this.onMonthBlur, list: name + '-months', tabIndex: "1"}), 
-        React.createElement("button", {type: "button", onClick: this.decreaseMonth, tabIndex: "2"}, "-")
-      ), 
-      React.createElement("div", {className: "SplitDateInput__part SplitDateInput__day"}, 
-        React.createElement("button", {type: "button", onClick: this.increaseDay, tabIndex: "3"}, "+"), 
-        React.createElement("input", {type: "text", name: name + '_day', value: this.state.dayText, onChange: this.onDayChange, onBlur: this.onDayBlur, tabIndex: "1"}), 
-        React.createElement("button", {type: "button", onClick: this.decreaseDay, tabIndex: "3"}, "-")
-      ), 
-      React.createElement("div", {className: "SplitDateInput__part SplitDateInput__year"}, 
-        React.createElement("button", {type: "button", onClick: this.increaseYear, tabIndex: "4"}, "+"), 
-        React.createElement("input", {type: "text", name: name + '_year', value: this.state.yearText, onChange: this.onYearChange, onBlur: this.onYearBlur, tabIndex: "1"}), 
-        React.createElement("button", {type: "button", onClick: this.decreaseYear, tabIndex: "4"}, "-")
+        ),
+        React.createElement("input", {type: "text", name: ("S{name}_month"), value: this.state.monthText,
+          onFocus: this.onInputFocus, onKeyDown: this.onMonthKeyDown,
+          onChange: this.onMonthChange, onBlur: this.onMonthBlur,
+          list: (name + "-months"), tabIndex: "1", maxLength: "3", autoComplete: "off"}
+        ),
+        React.createElement("button", {type: "button", onClick: this.decreaseMonth, tabIndex: "2"}, "−")
+      ),
+      React.createElement("div", {className: "SplitDateInput__part SplitDateInput__day"},
+        React.createElement("button", {type: "button", onClick: this.increaseDay, tabIndex: "3"}, "+"),
+        React.createElement("input", {type: "text", name: ("S{name}_day"), value: this.state.dayText,
+          onFocus: this.onInputFocus, onKeyDown: this.onDayKeyDown,
+          onChange: this.onDayChange, onBlur: this.onDayBlur,
+          tabIndex: "1", maxLength: "2", autoComplete: "off"}
+        ),
+        React.createElement("button", {type: "button", onClick: this.decreaseDay, tabIndex: "3"}, "−")
+      ),
+      React.createElement("div", {className: "SplitDateInput__part SplitDateInput__year"},
+        React.createElement("button", {type: "button", onClick: this.increaseYear, tabIndex: "4"}, "+"),
+        React.createElement("input", {type: "text", name: ("S{name}_year"), value: this.state.yearText,
+          onFocus: this.onInputFocus, onKeyDown: this.onYearKeyDown,
+          onChange: this.onYearChange, onBlur: this.onYearBlur,
+          tabIndex: "1", maxLength: "4", autoComplete: "off"}
+        ),
+        React.createElement("button", {type: "button", onClick: this.decreaseYear, tabIndex: "4"}, "−")
       )
     )
   }

@@ -27,9 +27,18 @@
   .SplitDateInput__part button {
     cursor: pointer;
     font-weight: bold;
+    padding-top: 4px;
+    padding-bottom: 4px;
   }
   .SplitDateInput__part input {
     border: none;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    font-weight: bold;
+  }
+  /* Hide the <datalist> dropdown arrow in Chrome */
+  .SplitDateInput__part input::-webkit-calendar-picker-indicator {
+    display: none;
   }
   </style>
 </head>
