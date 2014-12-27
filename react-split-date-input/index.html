@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>SplitDateInput</title>
+  <script src="http://fb.me/react-with-addons-0.12.2.js"></script>
+  <script src="http://fb.me/JSXTransformer-0.12.2.js"></script>
+  <script src="react-split-date-input.js"></script>
+  <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans">
+  <style>
+  body {
+    font-family: "Open Sans", sans-serif;
+  }
+  .SplitDateInput__part {
+    display: inline-block;
+    border: 1px solid #000;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-right: 6px;
+    max-width: 3em;
+  }
+  .SplitDateInput__part button, .SplitDateInput__part input {
+    display: block;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .SplitDateInput__part button {
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .SplitDateInput__part input {
+    border: none;
+  }
+  </style>
+</head>
+<body>
+  <h1><a href="https://github.com/insin/react-split-date-input">&lt;SplitDateInput/&gt;</a></h1>
+  <div id="app"></div>
+<script type="text/jsx;harmony=true">void function() {
+'use strict';
+
+var App = React.createClass({
+  getInitialState() {
+    return {
+      date: new Date()
+    }
+  },
+
+  onDateChanged(date) {
+    this.setState({date})
+  },
+
+  render() {
+    return <div>
+      {this.state.date.toDateString()}
+      <SplitDateInput value={this.state.date} onChange={this.onDateChanged}/>
+    </div>
+  }
+})
+
+React.render(<App/>, document.getElementById('app'))
+
+}()</script>
+</body>
