@@ -18,11 +18,12 @@
   }
   .SplitDateInput__part {
     display: inline-block;
+    margin-right: 6px;
+  }
+  .SplitDateInput--buttons .SplitDateInput__part {
     border: 1px solid #000;
     border-radius: 6px;
     overflow: hidden;
-    margin-right: 6px;
-    max-width: 3em;
   }
   .SplitDateInput__part button, .SplitDateInput__part input {
     display: block;
@@ -36,7 +37,7 @@
     padding-top: 4px;
     padding-bottom: 4px;
   }
-  .SplitDateInput__part input {
+  .SplitDateInput--buttons .SplitDateInput__part input {
     border: none;
     padding-top: 6px;
     padding-bottom: 6px;
@@ -57,18 +58,34 @@
 var App = React.createClass({
   getInitialState() {
     return {
-      date: new Date()
+      date1: new Date()
+    , date2: new Date()
     }
   },
 
-  onDateChanged(date) {
-    this.setState({date})
+  onDateChanged(stateProp, date) {
+    var stateChange = {}
+    stateChange[stateProp] = date
+    this.setState(stateChange)
   },
 
   render() {
     return <div>
-      {this.state.date.toDateString()}
-      <SplitDateInput value={this.state.date} onChange={this.onDateChanged}/>
+      <h2>Default</h2>
+      <p>
+        Some styles are applied only to this instance based on it having
+        a <code>SplitDateInput--buttons</code> modifier class.
+      </p>
+      <SplitDateInput value={this.state.date1} onChange={this.onDateChanged.bind(this, 'date1')}/>
+      <p>
+        <strong>Output:</strong> {this.state.date1.toDateString()}
+      </p>
+
+      <h2><code>noButtons</code> prop</h2>
+      <SplitDateInput noButtons value={this.state.date2} onChange={this.onDateChanged.bind(this, 'date2')}/>
+      <p>
+        <strong>Output:</strong> {this.state.date2.toDateString()}
+      </p>
     </div>
   }
 })

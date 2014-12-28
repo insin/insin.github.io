@@ -1,5 +1,5 @@
 /*!
- * react-split-date-input 1.0.0 (dev build at Sat, 27 Dec 2014 19:04:46 GMT) - https://github.com/insin/react-split-date-input
+ * react-split-date-input 1.0.0 (dev build at Sat, 27 Dec 2014 20:28:16 GMT) - https://github.com/insin/react-split-date-input
  * MIT Licensed
  */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.SplitDateInput=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
@@ -35,12 +35,14 @@ var SplitDateInput = React.createClass({displayName: "SplitDateInput",
   propTypes: {
     name: React.PropTypes.string
   , onChange: React.PropTypes.func.isRequired
+  , noButtons: React.PropTypes.bool
   , value: React.PropTypes.instanceOf(Date)
   },
 
   getDefaultProps:function() {
     return {
       name: 'splitDateInput'
+    , noButtons: false
     }
   },
 
@@ -63,10 +65,6 @@ var SplitDateInput = React.createClass({displayName: "SplitDateInput",
 
   // Shared
   // ======
-
-  onInputFocus:function(e) {
-    e.target.select()
-  },
 
   triggerChange:function() {
     var $__0=    this.state,year=$__0.year,month=$__0.month,day=$__0.day
@@ -216,37 +214,55 @@ var SplitDateInput = React.createClass({displayName: "SplitDateInput",
   },
 
   render:function() {
-    var name = this.props.name
-    return React.createElement("div", {className: "SplitDateInput"},
+    var $__0=   this.props,name=$__0.name,noButtons=$__0.noButtons
+    var $__1=       this.state,monthText=$__1.monthText,month=$__1.month,dayText=$__1.dayText,day=$__1.day,yearText=$__1.yearText,year=$__1.year
+    var showButtons = !noButtons
+    var daysInCurrentMonth = daysInMonth(month, year)
+    return React.createElement("div", {className: ("SplitDateInput SplitDateInput--" + (noButtons ? 'no' : '') + "buttons")},
       React.createElement("div", {className: "SplitDateInput__part SplitDateInput__month"},
-        React.createElement("button", {type: "button", onClick: this.increaseMonth, tabIndex: "2"}, "+"),
+        showButtons && React.createElement("button", {type: "button", onClick: this.increaseMonth, tabIndex: "-1"},
+          "+"
+        ),
         React.createElement("datalist", {id: (name + "-months")},
           MONTH_NAMES.map(function(month)  {return React.createElement("option", {value: month, key: month});})
         ),
-        React.createElement("input", {type: "text", name: ("S{name}_month"), value: this.state.monthText,
-          onFocus: this.onInputFocus, onKeyDown: this.onMonthKeyDown,
-          onChange: this.onMonthChange, onBlur: this.onMonthBlur,
-          list: (name + "-months"), tabIndex: "1", maxLength: "3", autoComplete: "off"}
+        React.createElement("input", {type: "text", name: ("S{name}_month"), value: monthText, size: "3",
+          onKeyDown: this.onMonthKeyDown, onChange: this.onMonthChange, onBlur: this.onMonthBlur,
+          tabIndex: "0", maxLength: "3", autoComplete: "off", list: (name + "-months"),
+          role: "spinbutton", "aria-label": "Month", "aria-valuenow": month,
+          "aria-valuetext": monthText, "aria-valuemin": "0", "aria-valuemax": "11"}
         ),
-        React.createElement("button", {type: "button", onClick: this.decreaseMonth, tabIndex: "2"}, "−")
+        showButtons && React.createElement("button", {type: "button", onClick: this.decreaseMonth, tabIndex: "-1"},
+          "−"
+        )
       ),
       React.createElement("div", {className: "SplitDateInput__part SplitDateInput__day"},
-        React.createElement("button", {type: "button", onClick: this.increaseDay, tabIndex: "3"}, "+"),
-        React.createElement("input", {type: "text", name: ("S{name}_day"), value: this.state.dayText,
-          onFocus: this.onInputFocus, onKeyDown: this.onDayKeyDown,
-          onChange: this.onDayChange, onBlur: this.onDayBlur,
-          tabIndex: "1", maxLength: "2", autoComplete: "off"}
+        showButtons && React.createElement("button", {type: "button", onClick: this.increaseDay, tabIndex: "-1"},
+          "+"
         ),
-        React.createElement("button", {type: "button", onClick: this.decreaseDay, tabIndex: "3"}, "−")
+        React.createElement("input", {type: "text", name: ("S{name}_day"), value: dayText, size: "2",
+          onKeyDown: this.onDayKeyDown, onChange: this.onDayChange, onBlur: this.onDayBlur,
+          tabIndex: "0", maxLength: "2", autoComplete: "off",
+          role: "spinbutton", "aria-label": "Day", "aria-valuenow": day,
+          "aria-valuemin": "1", "aria-valuemax": daysInCurrentMonth}
+        ),
+        showButtons && React.createElement("button", {type: "button", onClick: this.decreaseDay, tabIndex: "-1"},
+          "−"
+        )
       ),
       React.createElement("div", {className: "SplitDateInput__part SplitDateInput__year"},
-        React.createElement("button", {type: "button", onClick: this.increaseYear, tabIndex: "4"}, "+"),
-        React.createElement("input", {type: "text", name: ("S{name}_year"), value: this.state.yearText,
-          onFocus: this.onInputFocus, onKeyDown: this.onYearKeyDown,
-          onChange: this.onYearChange, onBlur: this.onYearBlur,
-          tabIndex: "1", maxLength: "4", autoComplete: "off"}
+        showButtons && React.createElement("button", {type: "button", onClick: this.increaseYear, tabIndex: "-1"},
+          "+"
         ),
-        React.createElement("button", {type: "button", onClick: this.decreaseYear, tabIndex: "4"}, "−")
+        React.createElement("input", {type: "text", name: ("S{name}_year"), value: yearText, size: "4",
+          onKeyDown: this.onYearKeyDown, onChange: this.onYearChange, onBlur: this.onYearBlur,
+          tabIndex: "0", maxLength: "4", autoComplete: "off",
+          role: "spinbutton", "aria-label": "Year", "aria-valuenow": year,
+          "aria-valuemin": "-999", "aria-valuemax": "9999"}
+        ),
+        showButtons && React.createElement("button", {type: "button", onClick: this.decreaseYear, tabIndex: "-1"},
+          "−"
+        )
       )
     )
   }
