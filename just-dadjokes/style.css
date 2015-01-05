@@ -30,7 +30,7 @@ h1 {
 }
 
 .Joke__link {
-  padding-right: 3em;
+  text-align: justify;
 }
 .Joke__link a {
   color: inherit;
@@ -39,6 +39,12 @@ h1 {
 }
 .Joke img {
   max-width: 100%;
+}
+.Joke .md {
+  text-align: justify;
+}
+.Joke .md img {
+  display: block;
 }
 
 @media screen and (max-width: 45em) {
@@ -53,5 +59,6 @@ h1 {
     content: ")";
   }
   .Joke__link {
-  padding-right: 0;
+    padding-right: 0 !important;
+  }
 }
