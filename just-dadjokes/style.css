@@ -28,6 +28,19 @@ h1 {
   color: #bbb;
   font-size: 2em
 }
+
+.Joke__link {
+  padding-right: 3em;
+}
+.Joke__link a {
+  color: inherit;
+  font-weight: bold;
+  text-decoration: none;
+}
+.Joke img {
+  max-width: 100%;
+}
+
 @media screen and (max-width: 45em) {
   .Joke__score {
     position: static;
@@ -39,12 +52,6 @@ h1 {
   .Joke__score::after {
     content: ")";
   }
-}
-.Joke__link a {
-  color: inherit;
-  font-weight: bold;
-  text-decoration: none;
-}
-.Joke img {
-  max-width: 100%;
+  .Joke__link {
+  padding-right: 0;
 }
