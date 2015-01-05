@@ -45,13 +45,13 @@ var DadJokes = React.createClass({
       var {children, after, before} = listing.data
       var jokes = []
       children.forEach(item => {
-        var {id, selftext_html, title, url} = item.data
+        var {id, score, selftext_html, title, url} = item.data
         var html = ''
         if (selftext_html) {
           _div.innerHTML = selftext_html
           html = _div.childNodes[0].nodeValue
         }
-        jokes.push({id, html, title, url})
+        jokes.push({id, html, score, title, url})
       })
       this.setState({after, before, jokes, loading: false})
     })
@@ -129,7 +129,10 @@ var Joke = React.createClass({
   render() {
     if (!this.props.html) { return null } // No punchliney? No showy!
     return <div className="Joke">
-      <div className="Joke__link"><a href={this.props.url}>{this.props.title}</a></div>
+      <div className="Joke__link">
+        <a href={this.props.url}>{this.props.title}</a>{' '}
+        <small className="Joke__score">{this.props.score}</small>
+      </div>
       <p className="Joke__waitforit">&hellip;</p>
       <div id={`joke-${this.props.id}`} ref="html" dangerouslySetInnerHTML={{__html: this.props.html}}/>
     </div>

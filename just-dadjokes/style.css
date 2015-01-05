@@ -1,0 +1,50 @@
+a {
+  color: inherit;
+}
+body {
+  font-family: Roboto, sans-serif;
+  color: #222;
+  padding: 1em;
+}
+h1 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.DadJokes {
+  max-width: 45em;
+  margin: 0 auto;
+}
+
+.Joke {
+  border-top: 1px solid #ccc;
+  padding: 2em 1em;
+  position: relative;
+}
+.Joke__score {
+  position: absolute;
+  right:.6em;
+  top: .6em;
+  color: #bbb;
+  font-size: 2em
+}
+@media screen and (max-width: 45em) {
+  .Joke__score {
+    position: static;
+    font-size: inherit;
+  }
+  .Joke__score::before {
+    content: "(";
+  }
+  .Joke__score::after {
+    content: ")";
+  }
+}
+.Joke__link a {
+  color: inherit;
+  font-weight: bold;
+  text-decoration: none;
+}
+.Joke img {
+  max-width: 100%;
+}
