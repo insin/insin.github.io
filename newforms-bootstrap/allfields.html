@@ -2,14 +2,15 @@
 <head>
   <meta charset="UTF-8">
   <title>All Default Fields &amp; Widgets | newforms-bootstrap</title>
-  <script src="http://fb.me/react-0.12.1.min.js"></script>
+  <script src="http://fb.me/react-with-addons-0.12.2.min.js"></script>
+  <script src="http://fb.me/JSXTransformer-0.12.2.js"></script>
   <script src="newforms.min.js"></script>
   <script src="newforms-bootstrap.js"></script>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
 </head>
 <body>
-<script>void function() {
+<script type="text/jsx;harmony=true">void function() {
 'use strict'
 
 var choices = [
@@ -38,7 +39,7 @@ function FakeFile(name, url) {
 }
 FakeFile.prototype.toString = function() { return this.name }
 
-var AllFieldsForm = BootstrapForm.extend({
+var AllFieldsForm = forms.Form.extend({
   CharField: forms.CharField({minLength: 5, maxLength: 10, helpText: {__html: 'Any text between 5 and 10 characters long.<br>(Try "Answer" then the Integer field below)'}}),
   CharFieldWithTextareaWidget: forms.CharField({label: 'Char field (Textarea widget)', widget: forms.Textarea}),
   CharFieldWithPasswordWidget: forms.CharField({label: 'Char field (PasswordInput widget)', widget: forms.PasswordInput}),
@@ -71,7 +72,7 @@ var AllFieldsForm = BootstrapForm.extend({
   TypedMultipleChoiceField: forms.TypedMultipleChoiceField({choices: choices, coerce: Number}),
   ComboField: forms.ComboField({fields: [
     forms.EmailField(),
-    forms.RegexField(/ferret/i, {errorMessages: {invalid: 'Where is ferret? à² _à² '}})
+    forms.RegexField(/ferret/i, {errorMessages: {invalid: 'Where is ferret? à² _à² '}})
   ], helpText: 'An email address which contains the word "ferret"'}),
   SplitDateTimeField: forms.SplitDateTimeField({label: 'Split date/time field (a MultiValueField)', inputDateFormats: dateFormats, inputTimeFormats: [timeFormat]}),
   IPAddressField: forms.IPAddressField({label: 'IP address field', helpText: '(Deprecated)'}),
@@ -88,50 +89,46 @@ var AllFieldsForm = BootstrapForm.extend({
   }
 })
 
-var App = React.createClass({displayName: 'App',
-  getInitialState:function() {
+var App = React.createClass({
+  getInitialState() {
     return {
-      form: new AllFieldsForm({onChange: this.forceUpdate.bind(this)})
-    , submitted: null
+      submitted: null
     }
   },
 
-  _onSubmit:function(e) {
+  _onSubmit(e) {
     e.preventDefault()
-    var form = this.state.form
-    var isValid = form.validate()
-    if (isValid) {
+    var form = this.refs.allFieldsForm.getForm()
+    if (form.validate()) {
       this.setState({submitted: form.cleanedData})
     }
-    else {
-      this.forceUpdate()
-    }
   },
 
-  render:function() {
-    var form = this.state.form
-    return React.createElement("div", {className: "container"},
-      React.createElement("div", {className: "row"},
-        React.createElement("h1", null, "All Default Fields & Widgets ", React.createElement("small", null, "(rendered with ", React.createElement("a", {href: "https://github.com/insin/newforms-bootstrap"}, "newforms-bootstrap"), "'s ", React.createElement("code", null, "BootstrapForm"), ")"))
-      ),
-      React.createElement("div", {className: "row"},
-        React.createElement("form", {onSubmit: this._onSubmit},
-          this.state.form.render(),
-          React.createElement("button", {type: "submit", className: "btn btn-primary"},
-            "Submit"
-          )
-        )
-      ),
-      React.createElement("div", {className: "row"},
-        this.state.submitted && React.createElement("div", {className: "alert alert-success"},
-          React.createElement("strong", null, "Submitted data"),
-          React.createElement("pre", null, JSON.stringify(this.state.submitted, null, 2))
-        )
-      )
-    )
+  render() {
+    return <div className="container">
+      <div className="row">
+        <h1>All Default Fields &amp; Widgets <small>(rendered with <a href="https://github.com/insin/newforms-bootstrap">newforms-bootstrap</a>'s <code>BootstrapForm</code>)</small></h1>
+      </div>
+      <div className="row">
+        <form onSubmit={this._onSubmit}>
+          <forms.RenderForm form={AllFieldsForm} ref="allFieldsForm">
+            <BootstrapForm/>
+          </forms.RenderForm>
+          <button type="submit" className="btn btn-primary">
+            Submit
+          </button>
+        </form>
+      </div>
+      <div className="row">
+        {this.state.submitted && <div className="alert alert-success">
+          <strong>Submitted data</strong>
+          <pre>{JSON.stringify(this.state.submitted, null, 2)}</pre>
+        </div>}
+      </div>
+    </div>
   }
 })
 
-React.render(React.createElement(App, null), document.body)
+React.render(<App/>, document.body)
 }()</script>
 </body>

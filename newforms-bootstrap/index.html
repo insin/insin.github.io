@@ -2,14 +2,15 @@
 <head>
   <meta charset="UTF-8">
   <title>The Form of Death | newforms-bootstrap</title>
-  <script src="http://fb.me/react-0.12.1.min.js"></script>
+  <script src="http://fb.me/react-with-addons-0.12.2.min.js"></script>
+  <script src="http://fb.me/JSXTransformer-0.12.2.js"></script>
   <script src="newforms.min.js"></script>
   <script src="newforms-bootstrap.js"></script>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
 </head>
 <body>
-<script>void function() {
+<script type="text/jsx;harmony=true">void function() {
 'use strict'
 
 function cap(s) {
@@ -38,7 +39,7 @@ var WEB_COLOURS = (
   'histle|Tomato|Turquoise|Violet|Wheat|White|WhiteSmoke|Yellow|YellowGreen'
 ).split('|')
 
-var DemoForm = BootstrapForm.extend({
+var DemoForm = forms.Form.extend({
   name: forms.CharField({label: 'Wwhat... is your name?',
                          helpText: 'Note: Sir Robin and Sir Galahad are banned from the Form of Death'}),
   quest: forms.CharField({label: 'Wwhat... is your quest?', widget: forms.Textarea}),
@@ -47,7 +48,7 @@ var DemoForm = BootstrapForm.extend({
   capital: forms.CharField({label: 'What is the capital of Assyria?', helpText: 'Hint: View Source'}),
   velocity: forms.FloatField({label: 'What is the air-speed velocity of an unladen swallow?', minValue: 0}),
 
-  cleanName:function(cb) {
+  cleanName(cb) {
     var name = this.cleanedData.name
     setTimeout(function() {
       var error = null
@@ -58,25 +59,25 @@ var DemoForm = BootstrapForm.extend({
     }, 1369)
   },
 
-  cleanQuest:function() {
+  cleanQuest() {
     if (!/grail/i.test(this.cleanedData.quest)) {
       throw forms.ValidationError('WHOOSH! (This is not a worthy quest!)')
     }
   },
 
-  cleanColour:function() {
+  cleanColour() {
     if (this.cleanedData.colour == "I don't know that!") {
       throw forms.ValidationError('WHOOSH!')
     }
   },
 
-  cleanCapital:function() {
+  cleanCapital() {
     if ('Assur|Nimrud|Dur Sarukin|Nineveh'.split('|').indexOf(this.cleanedData.capital) == -1) {
       throw forms.ValidationError('WHOOSH! (View Source!)')
     }
   },
 
-  clean:function() {
+  clean() {
     var colour = this.cleanedData.colour
     if (/arthur/i.test(this.cleanedData.name) && colour && colour != 'Bisque') {
       throw forms.ValidationError("Imposter! King Arthur's favourite colour is Bisque! WHOOSH!")
@@ -84,63 +85,60 @@ var DemoForm = BootstrapForm.extend({
   }
 })
 
-var App = React.createClass({displayName: 'App',
-  getInitialState:function() {
+var App = React.createClass({
+  getInitialState() {
     return {
-      form: new DemoForm({onChange: this.forceUpdate.bind(this)})
-    , submitted: null
+      submitted: null
     }
   },
 
-  _onSubmit:function(e) {
+  _onSubmit(e) {
     e.preventDefault()
-    var form = this.state.form
+    var form = this.refs.demoForm.getForm()
     if (form.isComplete()) {
       this.setState({submitted: form.cleanedData})
       return
     }
-    form.validate(function(err, isValid, cleanedData) {
+    form.validate((err, isValid, cleanedData) => {
       if (isValid) {
         this.setState({submitted: cleanedData})
       }
-      else {
-        this.forceUpdate()
-      }
-    }.bind(this))
+    })
   },
 
-  render:function() {
-    var form = this.state.form
-    return React.createElement("div", {className: "container"},
-      React.createElement("div", {className: "row"},
-        React.createElement("h1", null, "The Form of Death ", React.createElement("small", null, "(some ", React.createElement("a", {href: "https://www.youtube.com/watch?v=cV0tCphFMr8"}, "Monty Python"), " knowledge required)")),
-        React.createElement("p", {className: "lead"},
-          "Stop! Who would submit the Form of Death must answer me these questions" + ' ' +
-          "three, ere the submit button enabled be."
-        ),
-        React.createElement("p", null,
-          "A demo of default form rendering provided by ", React.createElement("code", null, "BootstrapForm"),
-          "from ", React.createElement("a", {href: "https://github.com/insin/newforms-bootstrap"}, "newforms bootstrap"), "."
-        )
-      ),
-      React.createElement("div", {className: "row"},
-        React.createElement("form", {onSubmit: this._onSubmit},
-          this.state.form.render(),
-          React.createElement("button", {type: "submit", className: "btn btn-primary", disabled: !form.isComplete()},
-            "Submit the Form of Death"
-          )
-        )
-      ),
-      React.createElement("div", {className: "row"},
-        this.state.submitted && React.createElement("div", {className: "alert alert-success"},
-          React.createElement("strong", null, "Submitted data"),
-          React.createElement("pre", null, JSON.stringify(this.state.submitted, null, 2))
-        )
-      )
-    )
+  render() {
+    return <div className="container">
+      <div className="row">
+        <h1>The Form of Death <small>(some <a href="https://www.youtube.com/watch?v=cV0tCphFMr8">Monty Python</a> knowledge required)</small></h1>
+        <p className="lead">
+          Stop! Who would submit the Form of Death must answer me these questions
+          three, ere the submit button enabled be.
+        </p>
+        <p>
+          A demo of default form rendering provided by <code>BootstrapForm</code>
+          from <a href="https://github.com/insin/newforms-bootstrap">newforms bootstrap</a>.
+        </p>
+      </div>
+      <div className="row">
+        <form onSubmit={this._onSubmit}>
+          <forms.RenderForm form={DemoForm} ref="demoForm">
+            <BootstrapForm/>
+          </forms.RenderForm>
+          <button type="submit" className="btn btn-primary">
+            Submit the Form of Death
+          </button>
+        </form>
+      </div>
+      <div className="row">
+        {this.state.submitted && <div className="alert alert-success">
+          <strong>Submitted data</strong>
+          <pre>{JSON.stringify(this.state.submitted, null, 2)}</pre>
+        </div>}
+      </div>
+    </div>
   }
 })
 
-React.render(React.createElement(App, null), document.body)
+React.render(<App/>, document.body)
 }()</script>
 </body>
