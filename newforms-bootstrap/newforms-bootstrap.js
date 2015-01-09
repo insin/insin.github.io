@@ -1,11 +1,12 @@
 /*!
- * newforms-bootstrap 1.0.0 - https://github.com/insin/newforms-bootstrap
+ * newforms-bootstrap 1.1.0 (dev build at Fri, 09 Jan 2015 13:32:18 GMT) - https://github.com/insin/newforms-bootstrap
  * MIT Licensed
  */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var o;"undefined"!=typeof window?o=window:"undefined"!=typeof global?o=global:"undefined"!=typeof self&&(o=self),o.BootstrapForm=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
 var React = (typeof window !== "undefined" ? window.React : typeof global !== "undefined" ? global.React : null)
+var cloneWithProps = React.addons.cloneWithProps
 
 var $__0=
      
@@ -169,6 +170,13 @@ var BootstrapRadioInlineRenderer = RadioFieldRenderer.extend({
   }
 })
 
+function patchForm(form) {
+  if (!form.__patchedByBootstrapForm) {
+    BootstrapForm.patchFields(form)
+    form.__patchedByBootstrapForm = true
+  }
+}
+
 var BootstrapForm = React.createClass({displayName: 'BootstrapForm',
   statics: {
     patchFields:function(form) {
@@ -213,11 +221,7 @@ var BootstrapForm = React.createClass({displayName: 'BootstrapForm',
   },
 
   render:function() {
-    var form = this.props.form
-    if (!form.__patchedByBootstrapForm) {
-      BootstrapForm.patchFields(form)
-      form.__patchedByBootstrapForm = true
-    }
+    patchForm(this.props.form)
     return React.createElement("div", null, 
       this.renderRows()
     )
@@ -250,11 +254,106 @@ var BootstrapForm = React.createClass({displayName: 'BootstrapForm',
   }
 })
 
+var Container = React.createClass({displayName: 'Container',
+  propTypes: {
+    fluid: React.PropTypes.bool
+  },
+
+  getDefaultProps:function() {
+    return {
+      fluid: false
+    }
+  },
+
+  render:function() {
+    patchForm(this.props.form)
+    return React.createElement("div", {className: cx('container', {'fluid': this.props.fluid})}, 
+      React.Children.map(this.props.children, function(child)  {return cloneWithProps(child, {form: this.props.form});}.bind(this))
+    )
+  }
+})
+
+var Row = React.createClass({displayName: 'Row',
+  render:function() {
+    return React.createElement("div", {className: "row"}, 
+      React.Children.map(this.props.children, function(child)  {return cloneWithProps(child, {form: this.props.form});}.bind(this))
+    )
+  }
+})
+
+var stringOrNumberProp = React.PropTypes.oneOf([
+  React.PropTypes.number
+, React.PropTypes.string
+])
+
+var ColMixin = {
+  propTypes: {
+    xs: stringOrNumberProp
+  , sm: stringOrNumberProp
+  , md: stringOrNumberProp
+  , lg: stringOrNumberProp
+  , xsOffset: stringOrNumberProp
+  , smOffset: stringOrNumberProp
+  , mdOffset: stringOrNumberProp
+  , lgOffset: stringOrNumberProp
+  , __all__: function(props, propName, componentName) {
+      if (!props.xs && !props.sm && !props.md && !props.lg) {
+        return new Error(
+          ("Invalid props for `" + componentName + ", column size must be specified.")
+        )
+      }
+    }
+  },
+
+  getColClassName:function() {
+    var props = this.props
+    var classNames = {}
+    classNames[("col-xs-" + props.xs)] = !!props.xs
+    classNames[("col-sm-" + props.sm)] = !!props.sm
+    classNames[("col-md-" + props.md)] = !!props.md
+    classNames[("col-lg-" + props.lg)] = !!props.lg
+    classNames[("col-xs-offset-" + props.xsOffset)] = !!props.xsOffset
+    classNames[("col-sm-offset-" + props.smOffset)] = !!props.smOffset
+    classNames[("col-md-offset-" + props.mdOffset)] = !!props.mdOffset
+    classNames[("col-lg-offset-" + props.lgOffset)] = !!props.lgOffset
+    return cx(classNames)
+  }
+}
+
+var Col = React.createClass({displayName: 'Col',
+  mixins: [ColMixin],
+
+  render:function() {
+    return React.createElement("div", {className: this.getColClassName()}, 
+      this.props.children
+    )
+  }
+})
+
+var Field = React.createClass({displayName: 'Field',
+  mixins: [ColMixin],
+
+  propTypes: {
+    name: React.PropTypes.string.isRequired
+  },
+
+  render:function() {
+    var field = this.props.form.boundField(this.props.name)
+    return React.createElement("div", {className: this.getColClassName()}, 
+      React.createElement(BootstrapField, {key: field.htmlName, field: field})
+    )
+  }
+})
+
 extend(BootstrapForm, {
-  CheckboxRenderer: BootstrapCheckboxRenderer
-, CheckboxInlineRenderer: BootstrapCheckboxInlineRenderer
-, RadioRenderer: BootstrapRadioRenderer
+  CheckboxInlineRenderer: BootstrapCheckboxInlineRenderer
+, CheckboxRenderer: BootstrapCheckboxRenderer
+, Col:Col
+, Container:Container
+, Field:Field
 , RadioInlineRenderer: BootstrapRadioInlineRenderer
+, RadioRenderer: BootstrapRadioRenderer
+, Row:Row
 })
 
 module.exports = BootstrapForm
