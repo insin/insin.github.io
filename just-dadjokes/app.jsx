@@ -1,5 +1,7 @@
 void function() { 'use strict';
 
+var SETTINGS_KEY = 'jdj:settings'
+
 var _div = document.createElement('div')
 
 function last(items) {
@@ -8,6 +10,16 @@ function last(items) {
 
 function fullname(joke) {
   return `t3_${joke.id}`
+}
+
+function saveSettings(state) {
+  var {minScore} = state
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify({minScore}))
+}
+
+function loadSettings() {
+  var json = localStorage.getItem(SETTINGS_KEY)
+  return json ? JSON.parse(json) : {}
 }
 
 var DadJokes = React.createClass({
@@ -19,13 +31,16 @@ var DadJokes = React.createClass({
   },
 
   getInitialState() {
+    var settings = loadSettings()
     return {
       after: null
     , before: null
     , count: 0
     , jokes: []
+    , minScore: settings.minScore || 0
     , loading: false
     , page: this.props.page || ''
+    , showSettings: false
     }
   },
 
@@ -80,11 +95,32 @@ var DadJokes = React.createClass({
     window.location.hash = ''
   },
 
+  toggleSettings(e) {
+    var showSettings = !this.state.showSettings
+    this.setState({showSettings})
+  },
+
+  minScoreChanged(e) {
+    var minScore = Number(e.target.value)
+    if (isNaN(minScore)) { return }
+    this.setState({minScore}, () => saveSettings(this.state))
+  },
+
   render() {
     return <div className="DadJokes">
-      <h1><a href="https://www.reddit.com/r/dadjokes/" onClick={this.home}>Just /r/dadjokes</a></h1>
+      <header>
+        <h1>
+          <a href="https://www.reddit.com/r/dadjokes/" onClick={this.home}>Just /r/dadjokes</a>{' '}
+          <img src="cog.png" tabIndex="0" alt="Settings" className="control" onClick={this.toggleSettings}/>
+        </h1>
+        {this.state.showSettings && <div className="DadJokes__settings">
+          <label htmlFor="minScore">Minimum score:</label>{' '}
+          <input type="number" value={this.state.minScore} id="minScore" min="0" onChange={this.minScoreChanged}/>
+        </div>}
+      </header>
       {this.state.loading && <p>Gathering puns&hellip;</p>}
-      {this.state.jokes.map(joke => <Joke key={joke.id} {...joke}/>)}
+      {this.state.jokes.filter(joke => joke.score >= this.state.minScore)
+                       .map(joke => <Joke key={joke.id} {...joke}/>)}
       {!this.state.loading && <h1>
         {this.state.before && <a href={`#before=${this.state.before}&count=${this.state.count + 1}`}>
           &lt; Prev
@@ -120,6 +156,10 @@ var Joke = React.createClass({
       var imgMatch = /imgur\.com\/(?:gallery\/)?([^\/]+)/.exec(href)
       if (imgMatch == null) {
         console.log(`Unable to process imgur link: ${href}`)
+        continue
+      }
+      if (imgMatch[1] == 'a') {
+        console.log(`Ignoring imgur album link: ${href}`)
         continue
       }
       var src = `http://i.imgur.com/${imgMatch[1]}`

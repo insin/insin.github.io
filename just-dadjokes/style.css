@@ -6,14 +6,37 @@ body {
   color: #222;
   padding: 1em;
 }
+header {
+  overflow: hidden;
+}
+header h1 {
+  position: relative;
+}
+header h1 img {
+  position: absolute;
+  top: 50%;
+  margin-top: -15px;
+  right: 0;
+}
 h1 {
   margin-top: 0;
   text-align: center;
+}
+img {
+  vertical-align: text-bottom;
 }
 
 .DadJokes {
   max-width: 45em;
   margin: 0 auto;
+}
+.DadJokes__settings {
+  float: right;
+  margin: .6em 0;
+}
+
+.control {
+  cursor: pointer;
 }
 
 .Joke {
