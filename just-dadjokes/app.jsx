@@ -1,5 +1,7 @@
 void function() { 'use strict';
 
+var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup
+
 var SETTINGS_KEY = 'jdj:settings'
 
 var _div = document.createElement('div')
@@ -113,10 +115,12 @@ var DadJokes = React.createClass({
           <a href="https://www.reddit.com/r/dadjokes/" onClick={this.home}>Just /r/dadjokes</a>{' '}
           <img src="cog.png" tabIndex="0" alt="Settings" className="control" onClick={this.toggleSettings}/>
         </h1>
-        {this.state.showSettings && <div className="DadJokes__settings">
-          <label htmlFor="minScore">Minimum score:</label>{' '}
-          <input type="number" value={this.state.minScore} id="minScore" min="0" onChange={this.minScoreChanged}/>
-        </div>}
+        <ReactCSSTransitionGroup transitionName="settings" component="div" className="settings-wrap">
+          {this.state.showSettings && <div className="DadJokes__settings" key="settings">
+            <label htmlFor="minScore">Minimum score:</label>{' '}
+            <input type="number" value={this.state.minScore} id="minScore" min="0" onChange={this.minScoreChanged}/>
+          </div>}
+        </ReactCSSTransitionGroup>
       </header>
       {this.state.loading && <p>Gathering puns&hellip;</p>}
       {this.state.jokes.filter(joke => joke.score >= this.state.minScore)
