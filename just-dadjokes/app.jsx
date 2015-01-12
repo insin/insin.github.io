@@ -14,14 +14,18 @@ function fullname(joke) {
   return `t3_${joke.id}`
 }
 
-function saveSettings(state) {
-  var {minScore} = state
-  localStorage.setItem(SETTINGS_KEY, JSON.stringify({minScore}))
+function saveSettings(settings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
 }
 
 function loadSettings() {
   var json = localStorage.getItem(SETTINGS_KEY)
-  return json ? JSON.parse(json) : {}
+  var settings = json ? JSON.parse(json) : {minScore: 0, inlineMedia: true}
+  // Patch defaults for new settings
+  if (typeof settings.inlineMedia == 'undefined') {
+    settings.inlineMedia = true
+  }
+  return settings
 }
 
 var DadJokes = React.createClass({
@@ -33,13 +37,12 @@ var DadJokes = React.createClass({
   },
 
   getInitialState() {
-    var settings = loadSettings()
     return {
       after: null
     , before: null
     , count: 0
     , jokes: []
-    , minScore: settings.minScore || 0
+    , settings: loadSettings()
     , loading: false
     , page: this.props.page || ''
     , showSettings: false
@@ -102,13 +105,28 @@ var DadJokes = React.createClass({
     this.setState({showSettings})
   },
 
-  minScoreChanged(e) {
-    var minScore = Number(e.target.value)
-    if (isNaN(minScore)) { return }
-    this.setState({minScore}, () => saveSettings(this.state))
+  settingChanged(e) {
+    var value
+    switch(e.target.type) {
+      case 'number':
+        value = Number(e.target.value)
+        if (isNaN(value)) { return }
+        break
+      case 'checkbox':
+        value = e.target.checked
+        break
+      default:
+        value = e.target.value
+    }
+
+    var settings = this.state.settings
+    settings[e.target.id] = value
+    saveSettings(settings)
+    this.setState({settings})
   },
 
   render() {
+    var {settings} = this.state
     return <div className="DadJokes">
       <header>
         <h1>
@@ -116,15 +134,20 @@ var DadJokes = React.createClass({
           <img src="cog.png" tabIndex="0" alt="Settings" className="control" onClick={this.toggleSettings}/>
         </h1>
         <ReactCSSTransitionGroup transitionName="settings" component="div" className="settings-wrap">
-          {this.state.showSettings && <div className="DadJokes__settings" key="settings">
-            <label htmlFor="minScore">Minimum score:</label>{' '}
-            <input type="number" value={this.state.minScore} id="minScore" min="0" onChange={this.minScoreChanged}/>
+          {this.state.showSettings && <div className="DadJokes__settings" key="settings" onChange={this.settingChanged}>
+            <div className="Setting">
+              <label htmlFor="minScore">Minimum score:</label>{' '}
+              <input type="number" value={settings.minScore} id="minScore" min="0"/>
+            </div>
+            <div className="Setting">
+              <label><input type="checkbox" checked={settings.inlineMedia} id="inlineMedia"/> Display media inline</label>
+            </div>
           </div>}
         </ReactCSSTransitionGroup>
       </header>
       {this.state.loading && <p>Gathering puns&hellip;</p>}
-      {this.state.jokes.filter(joke => joke.score >= this.state.minScore)
-                       .map(joke => <Joke key={joke.id} {...joke}/>)}
+      {this.state.jokes.filter(joke => joke.score >= settings.minScore)
+                       .map(joke => <Joke key={`${joke.id}-${settings.inlineMedia}`} inlineMedia={settings.inlineMedia} {...joke}/>)}
       {!this.state.loading && <h1>
         {this.state.before && <a href={`#before=${this.state.before}&count=${this.state.count + 1}`}>
           &lt; Prev
@@ -146,39 +169,90 @@ var DadJokes = React.createClass({
   }
 })
 
+var hasOwn = Object.prototype.hasOwnProperty
+
+function el(tagName, attrs, ...children) {
+  var element = document.createElement(tagName)
+  if (attrs) {
+    for (var attr in attrs) {
+      if (hasOwn.call(attrs, attr)) {
+        element[attr] = attrs[attr]
+      }
+    }
+  }
+  for (var i = 0, l = children.length; i < l ; i++) {
+    var child = children[i]
+    if (typeof child == 'string') {
+      child = document.createTextNode(child)
+    }
+    if (child != null && child !== false) {
+      element.appendChild(child)
+    }
+  }
+  return element
+}
+
 var Joke = React.createClass({
-  /**
-   * Find links to imgur and inline them as images.
-   */
   componentDidMount() {
-    var imgurLinks = document.querySelectorAll(`#joke-${this.props.id} a[href*="imgur.com"]`)
-    if (imgurLinks.length === 0) { return }
-    for (var i = 0, l = imgurLinks.length; i < l ; i++) {
-      var a = imgurLinks[i]
-      var {href, textContent} = a
+    var links = document.querySelectorAll(`#joke-${this.props.id} a`)
 
-      var imgMatch = /imgur\.com\/(?:gallery\/)?([^\/]+)/.exec(href)
-      if (imgMatch == null) {
-        console.log(`Unable to process imgur link: ${href}`)
+    for (var i = 0, l = links.length; i < l ; i++) {
+      var link = links[i]
+      var href = link.href.replace(/^file:\/\//, '')
+
+      // Convert spoiler links to display spoilers inline on hover/focus
+      if (href == '/s') {
+        link.parentNode.replaceChild(el('div', {className: 'Spoiler', tabIndex: 0},
+          el('span', {className: 'Spoiler__hint'}, link.textContent), ' ',
+          el('span', {className: 'Spoiler__spoiler'}, link.title)
+        ), link)
         continue
       }
-      if (imgMatch[1] == 'a') {
-        console.log(`Ignoring imgur album link: ${href}`)
+      // Convert root relative links to absolute links to Reddit
+      else if (href.charAt(0) == '/') {
+        link.href = href = `https://www.reddit.com${href}`
+      }
+
+      if (!this.props.inlineMedia) { return }
+
+      // Get the image href from imgur links
+      if (/imgur.com/.test(href)) {
+        var imgMatch = /imgur\.com\/(?:gallery\/)?([^\/]+)/.exec(href)
+        // No match, or it was a gallery URL
+        if (imgMatch == null || imgMatch[1] == 'a') { continue }
+        href = `http://i.imgur.com/${imgMatch[1]}`
+        if (!/\.[a-z]{3,4}$/i.test(href)) {
+          href += '.png'
+        }
+      }
+
+      if (/youtube.com|youtu.be/.test(href)) {
+        var ytMatch = /https?:\/\/(?:www\.)youtu(?:be\.com|\.be)\/(?:watch\?v=)(.+)/.exec(href)
+        if (ytMatch == null) { continue }
+        link.parentNode.replaceChild(el('div', {className: 'Video'},
+          el('iframe', {
+            width: 480
+          , height: 360
+          , src: `https://www.youtube.com/embed/${ytMatch[1]}`
+          , frameBorder: 0
+          , allowfullscreen: true
+          })
+        ), link)
         continue
       }
-      var src = `http://i.imgur.com/${imgMatch[1]}`
-      if (!/\.[a-z]{3,4}$/i.test(src)) {
-        src += '.png'
-      }
-      var img = document.createElement('img')
-      img.src = src
-      while (a.firstChild) {
-        a.removeChild(a.firstChild)
-      }
-      a.appendChild(img)
 
-      if (textContent != href) {
-        a.parentNode.insertBefore(document.createTextNode(`(${textContent})`), a.nextSibling)
+      if (/\.(?:png|gif|jpe?g)$/i.test(href)) {
+        var {textContent} = link
+        var img = el('img', {src: href})
+        while (link.firstChild) {
+          link.removeChild(link.firstChild)
+        }
+        link.appendChild(img)
+        // If the link text wasn't a repeat of the href, display it after the
+        // inlined image.
+        if (textContent != link.href) {
+          link.parentNode.insertBefore(document.createTextNode(`(${textContent})`), link.nextSibling)
+        }
       }
     }
   },

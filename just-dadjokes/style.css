@@ -58,6 +58,14 @@ img {
   opacity: 0.01;
 }
 
+.Setting {
+  margin-bottom: .6em;
+}
+
+.Setting:last-child {
+  margin-bottom: 0;
+}
+
 .control {
   cursor: pointer;
 }
@@ -107,4 +115,35 @@ img {
   .Joke__link {
     padding-right: 0 !important;
   }
+}
+
+.Spoiler {
+  background-color: #222;
+  padding: 4px;
+  cursor: help;
+}
+.Spoiler__hint {
+  color: #00d8ff;
+}
+.Spoiler__spoiler {
+  color: #222;
+}
+.Spoiler:hover .Spoiler__spoiler,
+.Spoiler:focus .Spoiler__spoiler {
+  color: #fff;
+}
+
+.Video {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 */
+  padding-top: 25px;
+  height: 0;
+}
+
+.Video iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
