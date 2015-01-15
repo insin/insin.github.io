@@ -26,6 +26,10 @@ h1 {
 img {
   vertical-align: text-bottom;
 }
+footer {
+  margin-top: 1em;
+  text-align: center;
+}
 
 .DadJokes {
   max-width: 45em;

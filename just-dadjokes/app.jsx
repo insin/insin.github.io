@@ -2,6 +2,8 @@ void function() { 'use strict';
 
 var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup
 
+var hasOwn = Object.prototype.hasOwnProperty
+
 var SETTINGS_KEY = 'jdj:settings'
 
 var _div = document.createElement('div')
@@ -12,6 +14,27 @@ function last(items) {
 
 function fullname(joke) {
   return `t3_${joke.id}`
+}
+
+function el(tagName, attrs, ...children) {
+  var element = document.createElement(tagName)
+  if (attrs) {
+    for (var attr in attrs) {
+      if (hasOwn.call(attrs, attr)) {
+        element[attr] = attrs[attr]
+      }
+    }
+  }
+  for (var i = 0, l = children.length; i < l ; i++) {
+    var child = children[i]
+    if (typeof child == 'string') {
+      child = document.createTextNode(child)
+    }
+    if (child != null && child !== false) {
+      element.appendChild(child)
+    }
+  }
+  return element
 }
 
 function saveSettings(settings) {
@@ -159,38 +182,12 @@ var DadJokes = React.createClass({
       </h1>}
       <footer>
         <a href="https://github.com/insin/just-dadjokes">
-          <img
-            style={{position: 'absolute', top: 0, right: 0, border: 0}}
-            src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub"
-          />
+          Source on GitHub
         </a>
       </footer>
     </div>
   }
 })
-
-var hasOwn = Object.prototype.hasOwnProperty
-
-function el(tagName, attrs, ...children) {
-  var element = document.createElement(tagName)
-  if (attrs) {
-    for (var attr in attrs) {
-      if (hasOwn.call(attrs, attr)) {
-        element[attr] = attrs[attr]
-      }
-    }
-  }
-  for (var i = 0, l = children.length; i < l ; i++) {
-    var child = children[i]
-    if (typeof child == 'string') {
-      child = document.createTextNode(child)
-    }
-    if (child != null && child !== false) {
-      element.appendChild(child)
-    }
-  }
-  return element
-}
 
 var Joke = React.createClass({
   componentDidMount() {
