@@ -1,12 +1,10 @@
 void function() { 'use strict';
 
+var _div = document.createElement('div')
 var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup
 
-var hasOwn = Object.prototype.hasOwnProperty
-
+var HASH_MATCH_RE = /^#?((after|before)=t3_[0-9a-z]{6}&count=(\d+))?$/i
 var SETTINGS_KEY = 'jdj:settings'
-
-var _div = document.createElement('div')
 
 function last(items) {
   return items[items.length - 1]
@@ -19,22 +17,26 @@ function fullname(joke) {
 function el(tagName, attrs, ...children) {
   var element = document.createElement(tagName)
   if (attrs) {
-    for (var attr in attrs) {
-      if (hasOwn.call(attrs, attr)) {
-        element[attr] = attrs[attr]
-      }
-    }
+    Object.keys(attrs).forEach(attr => element[attr] = attrs[attr])
   }
-  for (var i = 0, l = children.length; i < l ; i++) {
-    var child = children[i]
+  children.forEach(child => {
     if (typeof child == 'string') {
       child = document.createTextNode(child)
     }
     if (child != null && child !== false) {
       element.appendChild(child)
     }
-  }
+  })
   return element
+}
+
+function embedLinkedMedia(link, attrs) {
+  if (link.textContent != link.href) {
+    link.parentNode.insertBefore(document.createTextNode(`(${link.textContent})`), link.nextSibling)
+  }
+  link.parentNode.replaceChild(el('div', {className: 'EmbeddedMedia'},
+    el('iframe', attrs)
+  ), link)
 }
 
 function saveSettings(settings) {
@@ -43,12 +45,7 @@ function saveSettings(settings) {
 
 function loadSettings() {
   var json = localStorage.getItem(SETTINGS_KEY)
-  var settings = json ? JSON.parse(json) : {minScore: 0, inlineMedia: true}
-  // Patch defaults for new settings
-  if (typeof settings.inlineMedia == 'undefined') {
-    settings.inlineMedia = true
-  }
-  return settings
+  return json ? JSON.parse(json) : {minScore: 0, inlineMedia: true}
 }
 
 var DadJokes = React.createClass({
@@ -101,7 +98,7 @@ var DadJokes = React.createClass({
   },
 
   onHashChange(e) {
-    var match = /^#?((after|before)=t3_[0-9a-z]{6}&count=(\d+))?$/.exec(window.location.hash)
+    var match = HASH_MATCH_RE.exec(window.location.hash)
     if (!match) { return }
     var page = ''
     var count = 0
@@ -130,18 +127,13 @@ var DadJokes = React.createClass({
 
   settingChanged(e) {
     var value
-    switch(e.target.type) {
-      case 'number':
-        value = Number(e.target.value)
-        if (isNaN(value)) { return }
-        break
-      case 'checkbox':
-        value = e.target.checked
-        break
-      default:
-        value = e.target.value
+    if (e.target.type == 'number') {
+      value = Number(e.target.value)
+      if (isNaN(value)) { return }
     }
-
+    else if (e.target.type == 'checkbox') {
+      value = e.target.checked
+    }
     var settings = this.state.settings
     settings[e.target.id] = value
     saveSettings(settings)
@@ -154,7 +146,7 @@ var DadJokes = React.createClass({
       <header>
         <h1>
           <a href="https://www.reddit.com/r/dadjokes/" onClick={this.home}>Just /r/dadjokes</a>{' '}
-          <img src="cog.png" tabIndex="0" alt="Settings" className="control" onClick={this.toggleSettings}/>
+          <img src="cog.png" tabIndex="0" alt="Settings" className="control" onClick={this.toggleSettings} onKeyPress={this.toggleSettings}/>
         </h1>
         <ReactCSSTransitionGroup transitionName="settings" component="div" className="settings-wrap">
           {this.state.showSettings && <div className="DadJokes__settings" key="settings" onChange={this.settingChanged}>
@@ -181,9 +173,7 @@ var DadJokes = React.createClass({
         </a>}
       </h1>}
       <footer>
-        <a href="https://github.com/insin/just-dadjokes">
-          Source on GitHub
-        </a>
+        <a href="https://github.com/insin/just-dadjokes">Source on GitHub</a>
       </footer>
     </div>
   }
@@ -205,39 +195,46 @@ var Joke = React.createClass({
         ), link)
         continue
       }
+
       // Convert root relative links to absolute links to Reddit
-      else if (href.charAt(0) == '/') {
+      if (href.charAt(0) == '/') {
         link.href = href = `https://www.reddit.com${href}`
       }
 
       if (!this.props.inlineMedia) { return }
 
-      // Get the image href from imgur links
-      if (/imgur.com/.test(href)) {
-        var imgMatch = /imgur\.com\/(?:gallery\/)?([^\/]+)/.exec(href)
-        // No match, or it was a gallery URL
-        if (imgMatch == null || imgMatch[1] == 'a') { continue }
-        href = `http://i.imgur.com/${imgMatch[1]}`
+      // Embed YouTube videos
+      var ytMatch = /(?:https?:\/\/)?(?:www\.)?youtu(?:be\.com|\.be)\/(?:watch\?v=)([^%]+)/.exec(href)
+      if (ytMatch != null) {
+        embedLinkedMedia(link, {
+          width: 480
+        , height: 360
+        , src: `https://www.youtube.com/embed/${ytMatch[1]}`
+        , frameBorder: 0
+        , allowfullscreen: true
+        })
+        continue
+      }
+
+      // Convert imgur links to image links, or embed galleries
+      var imgurMatch = /(?:https?:\/\/)?(?:(?:www|i)\.)?imgur\.com\/(?:(gallery|a)\/)?([^\/]+)/.exec(href)
+      if (imgurMatch != null) {
+        if (imgurMatch[1] == 'a') {
+          embedLinkedMedia(link, {
+            width: '100%'
+          , height: 500
+          , src: `https://imgur.com/a/${imgurMatch[2]}/embed`
+          , frameBorder: 0
+          })
+          continue
+        }
+        href = `http://i.imgur.com/${imgurMatch[2]}`
         if (!/\.[a-z]{3,4}$/i.test(href)) {
           href += '.png'
         }
       }
 
-      if (/youtube.com|youtu.be/.test(href)) {
-        var ytMatch = /https?:\/\/(?:www\.)youtu(?:be\.com|\.be)\/(?:watch\?v=)(.+)/.exec(href)
-        if (ytMatch == null) { continue }
-        link.parentNode.replaceChild(el('div', {className: 'Video'},
-          el('iframe', {
-            width: 480
-          , height: 360
-          , src: `https://www.youtube.com/embed/${ytMatch[1]}`
-          , frameBorder: 0
-          , allowfullscreen: true
-          })
-        ), link)
-        continue
-      }
-
+      // Inline image links
       if (/\.(?:png|gif|jpe?g)$/i.test(href)) {
         var {textContent} = link
         var img = el('img', {src: href})
@@ -245,8 +242,6 @@ var Joke = React.createClass({
           link.removeChild(link.firstChild)
         }
         link.appendChild(img)
-        // If the link text wasn't a repeat of the href, display it after the
-        // inlined image.
         if (textContent != link.href) {
           link.parentNode.insertBefore(document.createTextNode(`(${textContent})`), link.nextSibling)
         }
@@ -258,19 +253,10 @@ var Joke = React.createClass({
     return false
   },
 
-  titlePadding() {
-    var score = this.props.score
-    if (score < 10) { return 3 }
-    if (score < 100) { return 4 }
-    if (score < 1000) { return 5 }
-    if (score < 10000) { return 6 }
-    return 7
-  },
-
   render() {
     if (!this.props.html) { return null } // No punchliney? No showy!
     return <div className="Joke">
-      <div className="Joke__link" style={{paddingRight: `${this.titlePadding()}em`}}>
+      <div className="Joke__link" style={{paddingRight: `${String(this.props.score).length + 2}em`}}>
         <a href={this.props.url}>{this.props.title}</a>{' '}
         <small className="Joke__score">{this.props.score}</small>
       </div>
@@ -280,8 +266,8 @@ var Joke = React.createClass({
   }
 })
 
-var pageMatch = /^#((?:after|before)=t3_[0-9a-z]{6}&count=\d+)$/.exec(window.location.hash)
-var page = (pageMatch != null ? pageMatch[1] : '')
+var pageMatch = HASH_MATCH_RE.exec(window.location.hash)
+var page = (pageMatch != null && pageMatch[1] ? pageMatch[1] : '')
 React.render(<DadJokes page={page}/>, document.getElementById('app'))
 
 }()

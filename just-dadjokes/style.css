@@ -17,7 +17,7 @@ header h1 img {
   position: absolute;
   top: 50%;
   margin-top: -15px;
-  right: 0;
+  right: 1px;
 }
 h1 {
   margin: 0;
@@ -137,14 +137,14 @@ footer {
   color: #fff;
 }
 
-.Video {
+.EmbeddedMedia {
   position: relative;
   padding-bottom: 56.25%; /* 16:9 */
   padding-top: 25px;
   height: 0;
 }
 
-.Video iframe {
+.EmbeddedMedia iframe {
   position: absolute;
   top: 0;
   left: 0;
