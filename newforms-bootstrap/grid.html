@@ -8,6 +8,18 @@
   <script src="newforms-bootstrap.js"></script>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap-theme.min.css">
+  <style>
+  .AutoTest .row > div {
+    text-align: center;
+    background-color: #eee;
+    border-radius: .6em;
+    overflow: hidden;
+    margin-bottom: .5em;
+    border: 1px solid #ccc;
+    padding-top: .2em;
+    padding-bottom: .2em;
+  }
+  </style>
 </head>
 <body>
 <script type="text/jsx;harmony=true">void function() {
@@ -18,26 +30,54 @@ var {Col, Container, Row, Field} = BootstrapForm
 var ProductForm = forms.Form.extend({
   productName: forms.CharField(),
   tags: forms.CharField(),
-  vendor: forms.ChoiceField({choices: ['Vendor 1', 'Vendor 2']}),
-  productType: forms.ChoiceField({choices: ['Product 1', 'Product 2']}),
+  vendor: forms.ChoiceField({choices: ['', 'Vendor 1', 'Vendor 2']}),
+  productType: forms.ChoiceField({choices: ['', 'Product 1', 'Product 2']}),
   productDescription: forms.CharField({widget: forms.Textarea}),
-  sku: forms.CharField(),
+  sku: forms.CharField({label: 'SKU'}),
   initialStockLevel: forms.IntegerField({minValue: 0}),
   costPrice: forms.DecimalField({minValue: 0, decimalPlaces: 2}),
   wholesalePrice: forms.DecimalField({minValue: 0, decimalPlaces: 2}),
-  retailPrice: forms.DecimalField({minValue: 0, decimalPlaces: 2})
+  retailPrice: forms.DecimalField({minValue: 0, decimalPlaces: 2}),
+
+  cleanSku(cb) {
+    setTimeout(() => {
+      if (this.cleanedData.sku == '12345') {
+        return cb(null, 'This SKU is already taken.')
+      }
+      cb(null)
+    }, 1000 + Math.random() * 1000)
+  },
+
+  clean(cb) {
+    var {productDescription} = this.cleanedData
+    if (productDescription && productDescription.toLowerCase().indexOf('clowns') != -1) {
+      throw forms.ValidationError('No clowns!')
+    }
+
+    var {productName, vendor} = this.cleanedData
+    if (!productName || !vendor) {
+      return false
+    }
+    setTimeout(() => {
+      if (productName == 'Widget' && vendor == 'Vendor 1') {
+        return cb(null, 'Product Name already exists for Vendor.')
+      }
+      cb(null)
+    }, 1000 + Math.random() * 1000)
+  }
 })
 
 var App = React.createClass({
-  _onSubmit(e) {
+  _onSubmit(refName, e) {
     e.preventDefault()
-    this.refs.productForm.getForm().validate()
+    this.refs[refName].getForm().validate(() => {})
   },
 
   render() {
     return <div className="container">
       <h1><a href="https://github.com/insin/newforms-bootstrap">newforms-bootstrap</a> Grid Components</h1>
-      <form onSubmit={this._onSubmit}>
+      <h2>Manual Column Widths</h2>
+      <form onSubmit={this._onSubmit.bind(this, 'productForm')}>
         <forms.RenderForm form={ProductForm} ref="productForm">
           <Container>
             <Row>
@@ -52,9 +92,7 @@ var App = React.createClass({
               <Field name="productDescription" md="12"/>
             </Row>
             <Row>
-              <Col md="2">
-                I'm just a regular column.
-              </Col>
+              <Col md="2"> I'm just a regular column.</Col>
               <Field name="sku" md="2"/>
               <Field name="initialStockLevel" md="2"/>
               <Field name="costPrice" md="2"/>
@@ -63,12 +101,191 @@ var App = React.createClass({
             </Row>
           </Container>
         </forms.RenderForm>
-        <button className="btn btn-primary">Submit</button>
+        <div className="container">
+          <div className="row">
+            <div className="col-xs-12 form-group">
+              <button className="btn btn-primary">Submit</button>
+            </div>
+          </div>
+        </div>
       </form>
+      <div className="container">
+        <div className="row">
+          <div className="col-xs-12">
+            <p>Custom validation checks:</p>
+            <ul>
+              <li>A product named "Widget" already exists for Vendor 1.</li>
+              <li>The SKU "12345" is already taken.</li>
+              <li>The product description is not allowed to mention clowns.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="autocolumns">Auto Column Widths</h2>
+      <p>
+        Columns in the following form layout are automatically assigned a width
+        based on the number of columns in the row which don't already have one.
+        In this case, none of them do.
+      </p>
+      <form onSubmit={this._onSubmit.bind(this, 'autoColumnsForm')}>
+        <forms.RenderForm form={ProductForm} prefix="auto" ref="autoColumnsForm">
+          <Container autoColumns="md">
+            <Row>
+              <Field name="productName"/>
+              <Field name="tags"/>
+            </Row>
+            <Row>
+              <Field name="vendor"/>
+              <Field name="productType"/>
+            </Row>
+            <Row>
+              <Field name="productDescription"/>
+            </Row>
+            <Row>
+              <Col>I'm just a regular column.</Col>
+              <Field name="sku"/>
+              <Field name="initialStockLevel"/>
+              <Field name="costPrice"/>
+              <Field name="wholesalePrice"/>
+              <Field name="retailPrice"/>
+            </Row>
+          </Container>
+        </forms.RenderForm>
+        <div className="container">
+          <div className="row">
+            <div className="col-xs-12 form-group">
+              <button className="btn btn-primary">Submit</button>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <h2 id="autocolumnstest">Auto Column Widths Test</h2>
+      <div className="AutoTest">
+        <Container form={new ProductForm()} autoColumns="sm">
+          <Row>
+            <Col>One</Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col smOffset="2">Two <code>smOffset="2"</code></Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+            <Col>Three</Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+            <Col smOffset="1">Three <code>smOffset="1"</code></Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+            <Col>Three</Col>
+            <Col>Four</Col>
+          </Row>
+          <Row>
+            <Col smOffset="1">One <code>smOffset="1"</code></Col>
+            <Col>Two</Col>
+            <Col>Three</Col>
+            <Col>Four</Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+            <Col>Three</Col>
+            <Col>Four</Col>
+            <Col>Five</Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+            <Col>Three</Col>
+            <Col>Four</Col>
+            <Col>Five</Col>
+            <Col>Six</Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+            <Col>Three</Col>
+            <Col>Four</Col>
+            <Col>Five</Col>
+            <Col>Six</Col>
+            <Col>Seven</Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+            <Col>Three</Col>
+            <Col>Four</Col>
+            <Col>Five</Col>
+            <Col>Six</Col>
+            <Col>Seven</Col>
+            <Col>Eight</Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+            <Col>Three</Col>
+            <Col>Four</Col>
+            <Col>Five</Col>
+            <Col>Six</Col>
+            <Col>Seven</Col>
+            <Col>Eight</Col>
+            <Col>Nine</Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+            <Col>Three</Col>
+            <Col>Four</Col>
+            <Col>Five</Col>
+            <Col>Six</Col>
+            <Col>Seven</Col>
+            <Col>Eight</Col>
+            <Col>Nine</Col>
+            <Col>Ten</Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+            <Col>Three</Col>
+            <Col>Four</Col>
+            <Col>Five</Col>
+            <Col>Six</Col>
+            <Col>Seven</Col>
+            <Col>Eight</Col>
+            <Col>Nine</Col>
+            <Col>Ten</Col>
+            <Col>Eleven</Col>
+          </Row>
+          <Row>
+            <Col>One</Col>
+            <Col>Two</Col>
+            <Col>Three</Col>
+            <Col>Four</Col>
+            <Col>Five</Col>
+            <Col>Six</Col>
+            <Col>Seven</Col>
+            <Col>Eight</Col>
+            <Col>Nine</Col>
+            <Col>Ten</Col>
+            <Col>Eleven</Col>
+            <Col>Twelve</Col>
+          </Row>
+        </Container>
+      </div>
     </div>
   }
 })
-
 
 React.render(<App/>, document.body)
 }()</script>
