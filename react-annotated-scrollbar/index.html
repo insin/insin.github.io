@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>React ScrollThing</title>
+    <script src="http://fb.me/react-with-addons-0.12.2.js"></script>
+    <script src="http://fb.me/JSXTransformer-0.12.2.js"></script>
+    <script src="detect-element-resize-0.5.3.js"></script>
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto">
+    <style>
+    html {
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      margin-left: 3em;
+      padding: 1em;
+      font-family: Roboto, sans-serif;
+    }
+    .ScrollThing {
+      cursor: default;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 4em;
+      background-color: #eee;
+      border-right: 1px solid #bbb;
+      box-sizing: border-box;
+      z-index: 99;
+      opacity: .75;
+    }
+    .ViewPort {
+      position: absolute;
+      left: -1px;
+      right: -1px;
+      box-sizing: border-box;
+      background-color: #99f;
+      opacity: .5;
+    }
+    .Marker {
+      cursor: pointer;
+      position: absolute;
+      left: 0;
+      right: 0;
+      box-sizing: border-box;
+      background-color: #ff0;
+      opacity: .5;
+    }
+    .Marker:hover {
+      opacity: .75;
+    }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="text/jsx;harmony=true" src="app.jsx"></script>
+  </body>
+</html>
