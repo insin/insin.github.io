@@ -1,5 +1,5 @@
 /*!
- * newforms-bootstrap 1.1.0 (dev build at Thu, 15 Jan 2015 09:12:30 GMT) - https://github.com/insin/newforms-bootstrap
+ * newforms-bootstrap 1.1.0 (dev build at Fri, 16 Jan 2015 21:16:56 GMT) - https://github.com/insin/newforms-bootstrap
  * MIT Licensed
  */
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var o;"undefined"!=typeof window?o=window:"undefined"!=typeof global?o=global:"undefined"!=typeof self&&(o=self),o.BootstrapForm=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
@@ -31,21 +31,28 @@ if ("production" !== "development") {
   }
 }
 
-var cx = function(staticClasses, conditionalClasses) {
+var toString = Object.prototype.toString
+
+function cx(/*[...staticClasses: (string|falsy)[, conditionalClasses: Object.<string, booleanish>]]*/) {
   var classNames = []
-  if (typeof conditionalClasses == 'undefined') {
-    conditionalClasses = staticClasses
+  var staticClassCount = arguments.length
+  var conditionalClasses = null
+  if (toString.call(arguments[arguments.length - 1]) == '[object Object]') {
+    conditionalClasses = arguments[arguments.length - 1]
+    staticClassCount -= 1
   }
-  else {
-    if (staticClasses) {
-      classNames.push(staticClasses)
+  for (var i = 0, l = staticClassCount; i < l; i++) {
+    if (arguments[i]) {
+      classNames.push(arguments[i])
     }
   }
-  Object.keys(conditionalClasses).forEach(function(className)  {
-    if (!!conditionalClasses[className]) {
-      classNames.push(className)
-    }
-  })
+  if (conditionalClasses != null) {
+    Object.keys(conditionalClasses).forEach(function(className)  {
+      if (!!conditionalClasses[className]) {
+        classNames.push(className)
+      }
+    })
+  }
   return classNames.join(' ')
 }
 
@@ -380,7 +387,8 @@ function calculateColumnProps(childProps, options) {
 
 var ColMixin = {
   propTypes: {
-    xs: colSizeChecker
+    className: React.PropTypes.string
+  , xs: colSizeChecker
   , sm: colSizeChecker
   , md: colSizeChecker
   , lg: colSizeChecker
@@ -401,13 +409,14 @@ var ColMixin = {
     classNames[("col-sm-offset-" + props.smOffset)] = !!props.smOffset
     classNames[("col-md-offset-" + props.mdOffset)] = !!props.mdOffset
     classNames[("col-lg-offset-" + props.lgOffset)] = !!props.lgOffset
-    return cx(classNames)
+    return cx(props.className, classNames)
   }
 }
 
 var Container = React.createClass({displayName: "Container",
   propTypes: {
     autoColumns: React.PropTypes.oneOf(BOOTSTRAP_COLUMN_SIZES)
+  , className: React.PropTypes.string
   , fluid: React.PropTypes.bool
   , spinner: React.PropTypes.string
   },
@@ -424,7 +433,7 @@ var Container = React.createClass({displayName: "Container",
     var $__0=  this.props,form=$__0.form
     patchForm(form)
     var formErrors = form.nonFieldErrors()
-    return React.createElement("div", {className: cx('container', {'fluid': this.props.fluid})}, 
+    return React.createElement("div", {className: cx(this.props.className, {'container': !this.props.fluid, 'fluid': this.props.fluid})}, 
       formErrors.isPopulated() && React.createElement("div", {key: form.addPrefix('__all__'), className: "alert alert-danger has-error"}, 
         formErrors.messages().map(errorMessage)
       ), 
@@ -444,6 +453,7 @@ var Container = React.createClass({displayName: "Container",
 var Row = React.createClass({displayName: "Row",
   propTypes: {
     autoColumns: React.PropTypes.oneOf(BOOTSTRAP_COLUMN_SIZES)
+  , className: React.PropTypes.string
   },
 
   render:function() {
@@ -458,7 +468,7 @@ var Row = React.createClass({displayName: "Row",
       , rowNum: this.props.index + 1
       })
     }
-    return React.createElement("div", {className: "row"}, 
+    return React.createElement("div", {className: cx('row', this.props.className)}, 
       React.Children.map(this.props.children, function(child, index)  {
         return cloneWithProps(child, extend({
           form: this.props.form
