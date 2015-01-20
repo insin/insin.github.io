@@ -204,7 +204,7 @@ var Joke = React.createClass({
       if (!this.props.inlineMedia) { return }
 
       // Embed YouTube videos
-      var ytMatch = /(?:https?:\/\/)?(?:www\.)?youtu(?:be\.com|\.be)\/(?:watch\?v=)([^%]+)/.exec(href)
+      var ytMatch = /(?:https?:\/\/)?(?:www\.)?youtu(?:be\.com|\.be)\/(?:watch\?v=)?([^%]+)/.exec(href)
       if (ytMatch != null) {
         embedLinkedMedia(link, {
           width: 480
