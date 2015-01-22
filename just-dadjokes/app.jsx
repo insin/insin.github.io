@@ -216,7 +216,7 @@ var Joke = React.createClass({
         continue
       }
 
-      // Convert imgur links to image links, or embed galleries
+      // Convert imgur links to image links, or embed galleries and GIFV videos
       var imgurMatch = /(?:https?:\/\/)?(?:(?:www|i)\.)?imgur\.com\/(?:(gallery|a)\/)?([^\/]+)/.exec(href)
       if (imgurMatch != null) {
         if (imgurMatch[1] == 'a') {
@@ -228,9 +228,20 @@ var Joke = React.createClass({
           })
           continue
         }
+
         href = `http://i.imgur.com/${imgurMatch[2]}`
         if (!/\.[a-z]{3,4}$/i.test(href)) {
           href += '.png'
+        }
+
+        if (/gifv$/.test(href)) {
+          embedLinkedMedia(link, {
+            width: '100%'
+          , height: 370
+          , src: `${href}#embed`
+          , frameBorder: 0
+          })
+          continue
         }
       }
 
