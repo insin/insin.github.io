@@ -26,6 +26,9 @@ h1 {
 img {
   vertical-align: text-bottom;
 }
+img[title] {
+  cursor: help;
+}
 footer {
   margin-top: 1em;
   text-align: center;

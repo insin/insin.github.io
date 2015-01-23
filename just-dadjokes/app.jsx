@@ -1,6 +1,7 @@
 void function() { 'use strict';
 
 var _div = document.createElement('div')
+var _removed = document.querySelector('#imgurRemoved')
 var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup
 
 var HASH_MATCH_RE = /^#?((after|before)=t3_[0-9a-z]{6}&count=(\d+))?$/i
@@ -17,7 +18,9 @@ function fullname(joke) {
 function el(tagName, attrs, ...children) {
   var element = document.createElement(tagName)
   if (attrs) {
-    Object.keys(attrs).forEach(attr => element[attr] = attrs[attr])
+    Object.keys(attrs).forEach(attr => {
+      if (attrs[attr] != null) { element[attr] = attrs[attr] }
+    })
   }
   children.forEach(child => {
     if (typeof child == 'string') {
@@ -216,6 +219,8 @@ var Joke = React.createClass({
         continue
       }
 
+      var guessedImgurExtension = false
+
       // Convert imgur links to image links, or embed galleries and GIFV videos
       var imgurMatch = /(?:https?:\/\/)?(?:(?:www|i)\.)?imgur\.com\/(?:(gallery|a)\/)?([^\/]+)/.exec(href)
       if (imgurMatch != null) {
@@ -230,9 +235,6 @@ var Joke = React.createClass({
         }
 
         href = `http://i.imgur.com/${imgurMatch[2]}`
-        if (!/\.[a-z]{3,4}$/i.test(href)) {
-          href += '.png'
-        }
 
         if (/gifv$/.test(href)) {
           embedLinkedMedia(link, {
@@ -243,19 +245,33 @@ var Joke = React.createClass({
           })
           continue
         }
+
+        if (!/\.[a-z]{3,4}$/i.test(href)) {
+          href += '.png'
+          guessedImgurExtension = true
+        }
       }
 
       // Inline image links
       if (/\.(?:png|gif|jpe?g)$/i.test(href)) {
-        var {textContent} = link
-        var img = el('img', {src: href})
+        var {innerHTML, textContent} = link
+        var img = el('img', {
+          src: href
+        , onload: !guessedImgurExtension ? null : (function(link) {
+            return function() {
+              // Restore the original link contents if the loaded image has the
+              // same dimensions as imgur's "removed" image.
+              if (this.width == _removed.width && this.height == _removed.height) {
+                link.innerHTML = innerHTML
+              }
+            }
+          }(link))
+        , title: textContent != link.href ? textContent : null
+        })
         while (link.firstChild) {
           link.removeChild(link.firstChild)
         }
         link.appendChild(img)
-        if (textContent != link.href) {
-          link.parentNode.insertBefore(document.createTextNode(`(${textContent})`), link.nextSibling)
-        }
       }
     }
   },
