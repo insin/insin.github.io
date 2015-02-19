@@ -17,17 +17,17 @@ footer a {
   color: inherit;
 }
 
-.contentEditable {
+.ContentEditable {
   box-sizing: border-box;
 }
-.contentEditable p {
+.ContentEditable p {
   margin: 0;
 }
-.contentEditable:hover {
+.ContentEditable:hover {
   outline: 1px solid #444;
 }
 
-.circleButton {
+.Button {
   border-radius: 50%;
   border: 1px solid #f8f8f2;
   boz-sizing: border-box;
@@ -40,7 +40,7 @@ footer a {
   transition: all .333s;
   width: 32px;
 }
-.circleButton:hover {
+.Button:hover {
   opacity: 1 !important;
 }
 
@@ -56,7 +56,7 @@ footer a {
   left: -48px;
   opacity: .25;
   position: absolute;
-  top: 19px;
+  top: 16px;
 }
 
 .Section h2 {
@@ -73,8 +73,11 @@ footer a {
   opacity: 0;
   position: absolute;
   right: 19px;
-  top: 19px;
+  top: 16px;
 }
 .Section h2:hover .Section__remove {
+  opacity: .25;
+}
+.Section__remove:focus {
   opacity: .25;
 }

@@ -17,9 +17,21 @@ function assign(dest) {
   return dest
 }
 
-// =========================================== contentEditable normalisation ===
+function joinClassNames() {
+  var classNames = []
+  for (var i = 0, l = arguments.length; i < l; i++) {
+    if (arguments[i]) {
+      classNames.push(arguments[i])
+    }
+  }
+  return classNames.join(' ')
+}
 
-// First line not wrapped with an opening block element (Chrome 40)
+// ========================================================= ContentEditable ===
+
+var isIE = 'ActiveXObject' in window
+
+// Chrome 40 not wrapping first line when wrapping with block elements
 var initialBreaks = /^([^<]+)(?:<div[^>]*><br[^>]*><\/div><div[^>]*>|<p[^>]*><br[^>]*><\/p><p[^>]*>)/
 var initialBreak = /^([^<]+)(?:<div[^>]*>|<p[^>]*>)/
 
@@ -33,14 +45,14 @@ var newlines = /\n/g
 var trimWhitespace = /^(?:\s|&nbsp;|<br[^>]*>)*|(?:\s|&nbsp;|<br[^>]*>)*$/g
 
 // IE11 displays 2 lines on initial display with the inner <br> present
-var DEFAULT_CONTENTEDITABLE_HTML = 'ActiveXObject' in window ? '<div></div>' : '<div><br></div>'
+var DEFAULT_CONTENTEDITABLE_HTML = isIE ? '<div>&nbsp;</div>' : '<div><br></div>'
 
 /**
  * Normalises contentEditable innerHTML, stripping all tags except <br> and
  * trimming leading and trailing whitespace and causes of whitespace. The
  * resulting normalised HTML uses <br> for linebreaks.
  */
-function normaliseContentEditableHTML(html, defaultHTML) {
+function normaliseContentEditableHTML(html) {
   var html = html.replace(initialBreaks, '$1\n\n')
                  .replace(initialBreak, '$1\n')
                  .replace(wrappedBreaks, '\n')
@@ -49,8 +61,99 @@ function normaliseContentEditableHTML(html, defaultHTML) {
                  .replace(allTags, '')
                  .replace(newlines, '<br>')
                  .replace(trimWhitespace, '')
-  return html || defaultHTML || DEFAULT_CONTENTEDITABLE_HTML
+  return html || DEFAULT_CONTENTEDITABLE_HTML
 }
+
+var ContentEditable = React.createClass({
+  propTypes: {
+    html: React.PropTypes.string.isRequired,
+
+    className: React.PropTypes.string,
+    component: React.PropTypes.any,
+    onBlur: React.PropTypes.func,
+    onChange: React.PropTypes.func,
+    onFocus: React.PropTypes.func,
+    onKeyDown: React.PropTypes.func,
+    placeholder: React.PropTypes.string
+  },
+
+  getDefaultProps() {
+    return {
+      component: 'div',
+      placeholder: '',
+      spellCheck: 'false'
+    }
+  },
+
+  _onBlur(e) {
+    var html = normaliseContentEditableHTML(e.target.innerHTML)
+    this.props.onBlur(e, html)
+  },
+
+  _onInput(e) {
+    var html = normaliseContentEditableHTML(e.target.innerHTML)
+    this.props.onChange(e, html)
+  },
+
+  _onFocus(e) {
+    var {target} = e
+    var selecting = false
+    var html = target.innerHTML
+    if (isIE && html == DEFAULT_CONTENTEDITABLE_HTML ||
+        this.props.placeholder && html == this.props.placeholder) {
+      setTimeout(function() {
+        var range
+        if (window.getSelection && document.createRange) {
+          range = document.createRange()
+          range.selectNodeContents(target)
+          var selection = window.getSelection()
+          selection.removeAllRanges()
+          selection.addRange(range)
+        }
+        else if (document.body.createTextRange) {
+          range = document.body.createTextRange()
+          range.moveToElementText(target)
+          range.select()
+        }
+      }, 1)
+      selecting = true
+    }
+    if (this.props.onFocus) {
+      this.props.onFocus(e, selecting)
+    }
+  },
+
+  _onKeyDown(e) {
+    // Prevent the default contents from being deleted, which can make the
+    // contentEditable unselectable.
+    if (!isIE && (e.key == 'Backspace' || e.key == 'Delete') &&
+        e.target.innerHTML == DEFAULT_CONTENTEDITABLE_HTML) {
+      e.preventDefault()
+    }
+    if (this.props.onKeyDown) {
+      this.props.onKeyDown(e)
+    }
+  },
+
+  render() {
+    var {
+      html,
+      className, component, onBlur, onChange, onFocus, onKeyDown, placeholder, spellCheck,
+      ...props
+    } = this.props
+    return <this.props.component
+      {...props}
+      className={joinClassNames('ContentEditable', className)}
+      contentEditable
+      dangerouslySetInnerHTML={{__html: html}}
+      onBlur={onBlur && this._onBlur}
+      onInput={onChange && this._onInput}
+      onFocus={(onFocus || placeholder) && this._onFocus}
+      onKeyDown={this._onKeyDown}
+      spellCheck={spellCheck}
+    />
+  }
+})
 
 // =================================================================== Store ===
 
@@ -139,28 +242,24 @@ var Ideas = React.createClass({
     IdeasStore.addSection()
   },
 
-  _onGeneralBlur(e) {
-    var general = normaliseContentEditableHTML(e.target.innerHTML)
-    IdeasStore.editGeneral(general)
+  _onBlur(e, html) {
+    IdeasStore.editGeneral(html)
   },
 
   render() {
     return <div className="Ideas">
-      <div
-        className="Ideas__general contentEditable"
-        contentEditable="true"
-        dangerouslySetInnerHTML={{__html: this.state.general}}
-        key="general"
-        onBlur={this._onGeneralBlur}
-        spellCheck="false"
+      <ContentEditable
+        className="Ideas__general"
+        html={this.state.general}
+        onBlur={this._onBlur}
+        placeholder="[general]"
       />
       <div className="Ideas__sections">
-        <a className="Ideas__add circleButton"
-           onClick={this._addSection}
-           tabIndex="0"
-           title="Add section">
+        <Button className="Ideas__add"
+                onClick={this._addSection}
+                title="Add section">
           +
-        </a>
+        </Button>
         {this.state.sections.map((section, i) => <Section
           {...section}
           index={i}
@@ -174,19 +273,17 @@ var Ideas = React.createClass({
 })
 
 var Section = React.createClass({
-  _onBlur(e) {
-    var {target} = e
-    var field = target.getAttribute('data-field')
-    var value = normaliseContentEditableHTML(e.target.innerHTML)
-    if (value != this.props[field]) {
+  _onBlur(e, html) {
+    var field = e.target.getAttribute('data-field')
+    if (html != this.props[field]) {
       var {id, section, ideas} = this.props
       var section = {id, section, ideas}
-      section[field] = value
+      section[field] = html
       IdeasStore.editSection(section, this.props.index)
     }
   },
 
-  _onTitleKeyDowm(e) {
+  _onKeyDown(e) {
     if (e.key == 'Enter') {
       e.preventDefault()
       e.target.blur()
@@ -200,31 +297,70 @@ var Section = React.createClass({
   render() {
     return <div className="Section">
       <h2>
-        <div
-          className="Section__name contentEditable"
-          contentEditable="true"
-          dangerouslySetInnerHTML={{__html: this.props.section}}
+        <ContentEditable
+          className="Section__name"
           data-field="section"
+          html={this.props.section}
           onBlur={this._onBlur}
-          onKeyDown={this._onTitleKeyDowm}
-          spellCheck="false"
+          onKeyDown={this._onKeyDown}
+          placeholder="[section]"
         />
-        <a className="Section__remove circleButton"
-           onClick={this._onRemove}
-           tabIndex="0"
-           title="Remove section">
+        <Button className="Section__remove"
+                      onClick={this._onRemove}
+                      title="Remove section">
           &mdash;
-        </a>
+        </Button>
       </h2>
-      <div
-        className="Section__ideas contentEditable"
+      <ContentEditable
+        className="Section__ideas"
         contentEditable="true"
-        dangerouslySetInnerHTML={{__html: this.props.ideas}}
         data-field="ideas"
+        html={this.props.ideas}
         onBlur={this._onBlur}
-        spellCheck="false"
+        placeholder="[ideas]"
       />
     </div>
+  }
+})
+
+var Button = React.createClass({
+  propTypes: {
+    onClick: React.PropTypes.func.isRequired,
+
+    className: React.PropTypes.string,
+    tabIndex: React.PropTypes.string
+  },
+
+  getDefaultProps() {
+    return {
+      tabIndex: '0'
+    }
+  },
+
+  _onClick(e) {
+    this.props.onClick(e)
+  },
+
+  _onKeyPress(e) {
+    if (e.key == 'Enter' || e.key == 'Space') {
+      this.props.onClick(e)
+    }
+  },
+
+  render() {
+    var {
+      onClick,
+      className, tabIndex,
+      ...props
+    } = this.props
+    return <span className={joinClassNames('Button', className)}
+                 onClick={this._onClick}
+                 onKeyPress={this._onKeyPress}
+                 role="button"
+                 tabIndex={tabIndex}
+                 {...props}>
+      {this.props.children}
+    </span>
   }
 })
 
