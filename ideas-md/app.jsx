@@ -78,10 +78,11 @@ function saveSections(sections) {
 var IdeasStore = {
   general: loadGeneral(),
   sections: loadSections(),
+  newSectionId: null,
 
   get() {
-    var {general, sections} = this
-    return {general, sections}
+    var {general, sections, newSectionId} = this
+    return {general, sections, newSectionId}
   },
 
   import(state) {
@@ -103,7 +104,8 @@ var IdeasStore = {
   },
 
   addSection() {
-    this.sections.unshift(assign({}, DEFAULT_SECTION, {id: ID_SEED++}))
+    this.newSectionId = ID_SEED++
+    this.sections.unshift(assign({}, DEFAULT_SECTION, {id: this.newSectionId}))
     saveSections(this.sections)
     this.notifyChange()
   },
@@ -161,12 +163,14 @@ var Ideas = React.createClass({
       this.setState(IdeasStore.get())
     }
     if (hasFileReader) {
+      document.addEventListener('dragover', this._onDragOver)
       document.addEventListener('drop', this._onDrop)
     }
   },
 
   componentWillUnmount() {
     if (hasFileReader) {
+      document.removeEventListener('dragover', this._onDragOver)
       document.removeEventListener('drop', this._onDrop)
     }
   },
@@ -177,6 +181,10 @@ var Ideas = React.createClass({
 
   _onBlur(e, html) {
     IdeasStore.editGeneral(html)
+  },
+
+  _onDragOver(e) {
+    e.preventDefault()
   },
 
   _onDrop(e) {
@@ -197,26 +205,28 @@ var Ideas = React.createClass({
 
   render() {
     return <div className="Ideas">
-      <PlainEditable
-        className="Ideas__general"
-        html={this.state.general}
-        onBlur={this._onBlur}
-        placeholder="[general]"
-      />
+      <Button className="Ideas__add"
+              onClick={this._addSection}
+              title="Add section">
+        +
+      </Button>
+      <div className="Ideas__general">
+        <PlainEditable
+          html={this.state.general}
+          onBlur={this._onBlur}
+          placeholder="[general]"
+        />
+      </div>
       <div className="Ideas__sections">
-        <Button className="Ideas__add"
-                onClick={this._addSection}
-                title="Add section">
-          +
-        </Button>
         {this.state.sections.map((section, i) => <Section
           {...section}
           index={i}
+          isNew={section.id == this.state.newSectionId}
           key={section.id}
           onChange={this._onSectionChange}
         />)}
       </div>
-      <footer>ideas-md 0.3 | <a href="https://github.com/insin/ideas-md">insin/ideas-md</a></footer>
+      <footer>ideas-md 0.4-alpha | <a href="https://github.com/insin/ideas-md">insin/ideas-md</a></footer>
     </div>
   }
 })
@@ -246,7 +256,13 @@ var Section = React.createClass({
   render() {
     return <div className="Section">
       <h2>
+        <Button className="Section__remove"
+                      onClick={this._onRemove}
+                      title="Remove section">
+          &mdash;
+        </Button>
         <PlainEditable
+          autoFocus={this.props.isNew}
           className="Section__name"
           data-field="section"
           html={this.props.section}
@@ -254,11 +270,6 @@ var Section = React.createClass({
           onKeyDown={this._onKeyDown}
           placeholder="[section]"
         />
-        <Button className="Section__remove"
-                      onClick={this._onRemove}
-                      title="Remove section">
-          &mdash;
-        </Button>
       </h2>
       <PlainEditable
         className="Section__ideas"
