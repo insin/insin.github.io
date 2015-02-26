@@ -13,6 +13,11 @@
     max-width: 960px;
     margin: 0 auto;
   }
+  * {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+  }
   .wrap {
     border: 1px solid;
   }
@@ -30,11 +35,42 @@
   .valueWrap {
     border: 1px solid;
     min-height: 1em;
+    white-space: pre-wrap;
   }
 
   footer {
     margin-top: 20px;
     text-align: center;
+  }
+
+  .container {
+    margin-right: auto;
+    margin-left: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .row {
+    margin-left: -15px;
+    margin-right: -15px;
+  }
+  .col {
+    position: relative;
+    min-height: 1px;
+    padding-left: 15px;
+    padding-right: 15px;
+    float: left;
+    width: 33.33333333%;
+  }
+  .container:before,
+  .container:after,
+  .row:before,
+  .row:after {
+    content: " ";
+    display: table;
+  }
+  .container:after,
+  .row:after {
+    clear: both;
   }
   </style>
 </head>
@@ -45,17 +81,22 @@
 var App = React.createClass({
   getInitialState() {
     return {
-      blurValue: '',
-      changeValue: ''
+      defaultOptionsBlurValue: 'One\n\nTwo\n\nThree',
+      noTrimBlurValue: 'One\n\nTwo\n\nThree',
+      singleLineBlurValue: 'One\n\nTwo\n\nThree'
     }
   },
 
   _onBlur(e, blurValue) {
-    this.setState({blurValue})
+    var change = {}
+    change[`${e.target.id}BlurValue`] = blurValue
+    this.setState(change)
   },
 
   _onChange(e, changeValue) {
-    this.setState({changeValue})
+    var change = {}
+    change[`${e.target.id}ChangeValue`] = changeValue
+    this.setState(change)
   },
 
   render() {
@@ -65,35 +106,33 @@ var App = React.createClass({
       <p>
         A <a href="http://facebook.github.io/react">React</a> component which
         attempts to make it easier to use <code>contentEditable</code> to edit
-        plain(ish) text.
+        plain text.
       </p>
 
       <h3>Features</h3>
       <ul>
         <li><p>
           Implemented as an "uncontrolled" component &mdash; i.e. changes to the
-          initial <code>html</code> prop passed by the parent component will not be reflected.
+          initial <code>value</code> prop passed by the parent component will not be reflected.
         </p></li>
         <li>
           <p>
-            <code>onChange(e, html)</code> and <code>onBlur(e, html)</code> callback props fire when
-            you'd expect and receive a normalised representation of
-            the <code>contentEditable</code>'s <code>innerHTML</code> which
-            uses <code>&lt;br&gt;</code> for linebreaks and strips all other HTML tags.
-          </p>
-          <p>
-            "Plain(ish)"? The return value is expected to be usable directly in the contentEditable
-            again later, so <code>&lt;br&gt;</code> tags and any encoded entities such
-            as <code>&amp;nbsp;</code> are retained.
+            <code>onChange(e, value)</code> and <code>onBlur(e, value)</code> callback props fire when
+            you'd expect and receive a plain text representation of
+            the <code>contentEditable</code>'s current contents.
           </p>
         </li>
         <li><p>
-          Leading &amp; trailing whitespace and HTML which would cause whitespace is trimmed in the
-          normalised HTML returned.
+          Leading &amp; trailing whitespace is trimmed by default - disable this by passing
+          a <code>noTrim</code> prop.
         </p></li>
         <li><p>
-          If a <code>placeholder</code> prop is provided, text in the <code>contentEditable</code>
-          will be automatically selected <code>onFocus</code> when its <code>innerHTML</code> matches
+          Linebreaks may be created and pasted in by default - restrict content to a single line
+          by passing a <code>singleLine</code> prop.
+        </p></li>
+        <li><p>
+          If a <code>placeholder</code> prop is provided, text in the <code>contentEditable</code> will
+          be automatically selected <code>onFocus</code> when its <code>innerHTML</code> matches
           the given value.
         </p></li>
         <li><p>
@@ -108,6 +147,20 @@ var App = React.createClass({
           <p>You must set up some CSS to make paragraphs act like linebreaks in Internet Explorer:</p>
           <pre><code>{'.PlainEditable p { margin: 0; }'}</code></pre>
         </li>
+        <li>
+          <p>
+            <code>PlainEditable</code> doesn't attempt to convert the contents of
+            the <code>contentEditable</code> itself to match the plain text values it returns - if
+            you paste rich text or multiple lines they will be displayed as-is.
+          </p>
+          <p>
+            You can bodge this conversion yourself by updating the <code>value</code> prop you pass
+            the component after an <code>onBlur()</code>, since this won't cause cursor jumping.
+          </p>
+          <p>
+            All the demo <code>PlainEditable</code> components below implement this workaround.
+          </p>
+        </li>
         <li><p>
           <code>contentEditable</code> is an inconsistent mess across browsers and this has only been
           tested in the latest stable Firefox (35), Chrome (40) and Internet Explorer (11) with
@@ -116,30 +169,106 @@ var App = React.createClass({
         </p></li>
       </ul>
 
-      <h3>Demo</h3>
-      <label><code>&lt;PlainEditable
-  onBlur={'{this._onBlur}'} onChange={'{this._onChange}'} html="One&lt;br&gt;&lt;br&gt;Two&lt;br&gt;&lt;br&gt;Three"&gt;</code></label>
-      <div className="wrap">
-        <PlainEditable
-          onBlur={this._onBlur}
-          onChange={this._onChange}
-          html="One<br><br>Two<br><br>Three"
-        />
+      <h2>Demos</h2>
+      <h3>Default Options</h3>
+      <div className="container">
+        <div className="row">
+          <div className="col">
+            <label><code>&lt;PlainEditable/&gt;</code></label>
+          </div>
+          <div className="col">
+             <label><code>onBlur(event, value)</code></label>
+          </div>
+          <div className="col">
+            <label><code>onChange(event, value)</code></label>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col">
+            <div className="wrap">
+              <PlainEditable
+                id="defaultOptions"
+                onBlur={this._onBlur}
+                onChange={this._onChange}
+                value={this.state.defaultOptionsBlurValue}
+              />
+            </div>
+          </div>
+          <div className="col">
+            <div className="valueWrap">{this.state.defaultOptionsBlurValue}</div>
+          </div>
+          <div className="col">
+            <div className="valueWrap">{this.state.defaultOptionsChangeValue}</div>
+          </div>
+        </div>
       </div>
-      <label><code>&lt;/PlainEditable&gt;</code></label>
 
-      <br/>
-
-      <div>
-        <label><code>onBlur(event, html)</code></label>
-        <div className="valueWrap">{this.state.blurValue}</div>
+      <h3>Disable Trimming</h3>
+      <div className="container">
+        <div className="row">
+          <div className="col">
+            <label><code>&lt;PlainEditable noTrim/&gt;</code></label>
+          </div>
+          <div className="col">
+             <label><code>onBlur(event, value)</code></label>
+          </div>
+          <div className="col">
+            <label><code>onChange(event, value)</code></label>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col">
+            <div className="wrap">
+              <PlainEditable
+                id="noTrim"
+                noTrim
+                onBlur={this._onBlur}
+                onChange={this._onChange}
+                value={this.state.noTrimBlurValue}
+              />
+            </div>
+          </div>
+          <div className="col">
+            <div className="valueWrap">{this.state.noTrimBlurValue}</div>
+          </div>
+          <div className="col">
+            <div className="valueWrap">{this.state.noTrimChangeValue}</div>
+          </div>
+        </div>
       </div>
 
-      <br/>
-
-      <div>
-        <label><code>onChange(event, html)</code></label>
-        <div className="valueWrap">{this.state.changeValue}</div>
+      <h3>Single Line</h3>
+      <div className="container">
+        <div className="row">
+          <div className="col">
+            <label><code>&lt;PlainEditable singleLine/&gt;</code></label>
+          </div>
+          <div className="col">
+             <label><code>onBlur(event, value)</code></label>
+          </div>
+          <div className="col">
+            <label><code>onChange(event, value)</code></label>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col">
+            <div className="wrap">
+              <PlainEditable
+                id="singleLine"
+                singleLine
+                onBlur={this._onBlur}
+                onChange={this._onChange}
+                value={this.state.singleLineBlurValue}
+              />
+            </div>
+          </div>
+          <div className="col">
+            <div className="valueWrap">{this.state.singleLineBlurValue}</div>
+          </div>
+          <div className="col">
+            <div className="valueWrap">{this.state.singleLineChangeValue}</div>
+          </div>
+        </div>
       </div>
 
       <footer><a href="https://github.com/insin/react-plain-editable">Source on GitHub</a></footer>
