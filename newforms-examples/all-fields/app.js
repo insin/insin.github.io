@@ -1,6 +1,11 @@
-'use strict';
+void function() { 'use strict';
 
-void function() {
+if ('File' in window) {
+  File.prototype.toJSON = function() {
+    var $__0=   this,name=$__0.name,size=$__0.size
+    return {name:name, size:size}
+  }
+}
 
 var choices = [
   [1, 'foo']
@@ -20,7 +25,7 @@ var dateFormats = [
 , '%d/%m/%y' // '25/10/06'
 ]
 var timeFormat = '%H:%M' // '14:30'
-var dateTimeFormats = dateFormats.map(function(df) { return df + ' ' + timeFormat})
+var dateTimeFormats = dateFormats.map(function(df)  {return (df + " " + timeFormat);})
 
 function FakeFile(name, url) {
   this.name = name
@@ -29,7 +34,7 @@ function FakeFile(name, url) {
 FakeFile.prototype.toString = function() { return this.name }
 
 var AllFieldsForm = forms.Form.extend({
-  CharField: forms.CharField({minLength: 5, maxLength: 10, helpText: {__html: 'Any text between 5 and 10 characters long.<br>(Try "Answer" then the Integer field below)'}})
+  CharField: forms.CharField({minLength: 5, maxLength: 10, widgetAttrs: {autoFocus: true}, helpText: {__html: 'Any text between 5 and 10 characters long.<br>(Try "Answer" then the Integer field below)'}})
 , CharFieldWithTextareaWidget: forms.CharField({label: 'Char field (textarea)', widget: forms.Textarea})
 , CharFieldWithPasswordWidget: forms.CharField({widget: forms.PasswordInput})
 , IntegerField: forms.IntegerField({minValue: 42, maxValue: 420, helpText: 'Any whole number between 42 and 420', validation: 'onBlur'})
@@ -40,8 +45,9 @@ var AllFieldsForm = forms.Form.extend({
 , DateTimeField: forms.DateTimeField({inputFormats: dateTimeFormats, helpText: 'e.g. 2014-03-01 20:08'})
 , RegexField: forms.RegexField(/^I am Jack's /, {initial: "I am Jack's ", minLength: 20, helpText: 'Must begin with "I am Jack\'s " and be at least 20 characters long'})
 , EmailField: forms.EmailField()
-, FileField: forms.FileField({helpText: 'Required'})
+, FileField: forms.FileField({maxLength: 10, helpText: 'Required, file name 10 or fewer characters'})
 , FileFieldWithInitial: forms.FileField({initial: new FakeFile('Fake File', 'fake.file')})
+, MultipleFileField: forms.MultipleFileField({maxLength: 10, helpText: 'Required, file names 10 or fewer characters'})
 , ImageField: forms.ImageField({required: false, helpText: 'Optional'})
 , ImageFieldWithIniitial: forms.ImageField({required: false, initial: new FakeFile('Fake File', 'fake.file')   })
 , URLField: forms.URLField({label: 'URL field'})
@@ -66,7 +72,7 @@ var AllFieldsForm = forms.Form.extend({
 , GenericIPAddressField: forms.GenericIPAddressField({label: 'Generic IP address field', helpText: 'An IPv4 or IPv6 address'})
 , SlugField: forms.SlugField({helpText: 'Letters, numbers, underscores, and hyphens only'})
 
-, clean: function() {
+, clean:function() {
     if (this.cleanedData.CharField == 'Answer' &&
         this.cleanedData.IntegerField &&
         this.cleanedData.IntegerField != 42) {
@@ -75,8 +81,8 @@ var AllFieldsForm = forms.Form.extend({
     }
   }
 
-, render: function() {
-    return this.boundFields().map(function(bf) {
+, render:function() {
+    return this.boundFields().map(function(bf)  {
       // Display cleaneddata, indicating its type
       var cleanedData
       if (this.cleanedData && bf.name in this.cleanedData) {
@@ -100,9 +106,7 @@ var AllFieldsForm = forms.Form.extend({
                 : React.createElement("p", null, bf.helpText))
       }
 
-      var errors = bf.errors().messages().map(function(message) {
-        return React.createElement("div", null, message)
-      })
+      var errors = bf.errors().messages().map(function(message)  {return React.createElement("div", null, message);})
 
       return React.createElement("tr", {key: bf.htmlname}, 
         React.createElement("th", null, bf.labelTag()), 
@@ -116,14 +120,14 @@ var AllFieldsForm = forms.Form.extend({
   }
 })
 
-var AllFields = React.createClass({displayName: 'AllFields',
-  getInitialState: function() {
+var AllFields = React.createClass({displayName: "AllFields",
+  getInitialState:function() {
     return({
       form: new AllFieldsForm({onChange: this.forceUpdate.bind(this)})
     })
   }
 
-, render: function() {
+, render:function() {
     var nonFieldErrors = this.state.form.nonFieldErrors()
     return React.createElement("form", {encType: "multipart/form-data", ref: "form", onSubmit: this.onSubmit}, 
       nonFieldErrors.isPopulated() && React.createElement("div", null, 
@@ -157,9 +161,9 @@ var AllFields = React.createClass({displayName: 'AllFields',
     )
   }
 
-, onSubmit: function(e) {
+, onSubmit:function(e) {
     e.preventDefault()
-    this.state.form.validate()
+    this.state.form.validate(this.refs.form)
     this.forceUpdate()
   }
 })
