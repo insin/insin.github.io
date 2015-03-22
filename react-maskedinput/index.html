@@ -221,7 +221,7 @@ module.exports = Object.assign || function (target, source) {
 },{}]},{},[1])(1)
 });</script>
   <script>/*!
- * react-maskedinput 1.0.0 (dev build at Sun, 22 Mar 2015 02:08:46 GMT) - https://github.com/insin/react-maskedinput
+ * react-maskedinput 1.0.0 (dev build at Sun, 22 Mar 2015 02:59:26 GMT) - https://github.com/insin/react-maskedinput
  * MIT Licensed
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.MaskedInput = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
@@ -256,8 +256,25 @@ var MaskedInput = React.createClass({displayName: "MaskedInput",
     setSelection(this.getDOMNode(), this.mask.selection)
   },
 
+  _onChange:function(e) {
+    console.log('onChange', getSelection(this.getDOMNode()), e.target.value)
+
+    var maskValue = this.mask.getValue()
+    if (e.target.value != maskValue) {
+      // Naive cut detection
+      if (e.target.value.length < maskValue.length) {
+        this.mask.backspace()
+      }
+      e.target.value = this.mask.getValue()
+      this._updateInputSelection()
+    }
+    if (this.props.onChange) {
+      this.props.onChange(e)
+    }
+  },
+
   _onKeyDown:function(e) {
-    //console.log('onKeyDown', getSelection(this.getDOMNode()), e.key, e.target.value)
+    console.log('onKeyDown', getSelection(this.getDOMNode()), e.key, e.target.value)
 
     if (e.key == 'Backspace') {
       e.preventDefault()
@@ -275,12 +292,7 @@ var MaskedInput = React.createClass({displayName: "MaskedInput",
   },
 
   _onKeyPress:function(e) {
-    // console.log('onKeyPress', getSelection(this.getDOMNode()), e.key, e.target.value)
-
-    if (e.ctrlKey && e.key == 'x') {
-      // Not quite sure how to handle this, so just cancel it for now
-      e.preventDefault()
-    }
+    console.log('onKeyPress', getSelection(this.getDOMNode()), e.key, e.target.value)
 
     // Ignore modified key presses
     if (e.metaKey || e.altKey || e.ctrlKey) { return }
@@ -295,7 +307,7 @@ var MaskedInput = React.createClass({displayName: "MaskedInput",
   },
 
   _onPaste:function(e) {
-    // console.log('onPaste', getSelection(this.getDOMNode()), e.clipboardData.getData('text/plain'), e.target.value)
+    console.log('onPaste', getSelection(this.getDOMNode()), e.clipboardData.getData('Text'), e.target.value)
 
     e.preventDefault()
     this._updateMaskSelection()
@@ -308,13 +320,20 @@ var MaskedInput = React.createClass({displayName: "MaskedInput",
     }
   },
 
+  _onSelect:function(e) {
+    console.log('onSelect', getSelection(this.getDOMNode()))
+    this._updateMaskSelection()
+  },
+
   render:function() {
     var $__0=   this.props,pattern=$__0.pattern,props=(function(source, exclusion) {var rest = {};var hasOwn = Object.prototype.hasOwnProperty;if (source == null) {throw new TypeError();}for (var key in source) {if (hasOwn.call(source, key) && !hasOwn.call(exclusion, key)) {rest[key] = source[key];}}return rest;})($__0,{pattern:1})
     return React.createElement("input", React.__spread({},  props, 
       {maxLength: pattern.length, 
+      onChange: this._onChange, 
       onKeyDown: this._onKeyDown, 
       onKeyPress: this._onKeyPress, 
       onPaste: this._onPaste, 
+      onSelect: this._onSelect, 
       size: pattern.length, 
       value: this.mask.getValue()})
     )
