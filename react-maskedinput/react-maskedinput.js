@@ -1,5 +1,5 @@
 /*!
- * react-maskedinput 1.0.0 (dev build at Wed, 25 Mar 2015 01:12:30 GMT) - https://github.com/insin/react-maskedinput
+ * react-maskedinput 1.0.0 - https://github.com/insin/react-maskedinput
  * MIT Licensed
  */
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.MaskedInput = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
@@ -48,8 +48,11 @@ var MaskedInput = React.createClass({displayName: "MaskedInput",
         this.mask.selection.end = this.mask.selection.start + sizeDiff
         this.mask.backspace()
       }
-      e.target.value = this.mask.getValue()
-      this._updateInputSelection()
+      var value = this._getDisplayValue()
+      e.target.value = value
+      if (value) {
+        this._updateInputSelection()
+      }
     }
     if (this.props.onChange) {
       this.props.onChange(e)
@@ -63,8 +66,11 @@ var MaskedInput = React.createClass({displayName: "MaskedInput",
       e.preventDefault()
       this._updateMaskSelection()
       if (this.mask.backspace()) {
-        e.target.value = this.mask.getValue()
-        this._updateInputSelection()
+        var value = this._getDisplayValue()
+        e.target.value = value
+        if (value) {
+          this._updateInputSelection()
+        }
         this.props.onChange(e)
       }
     }
@@ -99,16 +105,23 @@ var MaskedInput = React.createClass({displayName: "MaskedInput",
     }
   },
 
+  _getDisplayValue:function() {
+    var value = this.mask.getValue()
+    return value === this.mask.emptyValue ? '' : value
+  },
+
   render:function() {
-    var $__0=    this.props,pattern=$__0.pattern,size=$__0.size,props=(function(source, exclusion) {var rest = {};var hasOwn = Object.prototype.hasOwnProperty;if (source == null) {throw new TypeError();}for (var key in source) {if (hasOwn.call(source, key) && !hasOwn.call(exclusion, key)) {rest[key] = source[key];}}return rest;})($__0,{pattern:1,size:1})
+    var $__0=     this.props,pattern=$__0.pattern,size=$__0.size,placeholder=$__0.placeholder,props=(function(source, exclusion) {var rest = {};var hasOwn = Object.prototype.hasOwnProperty;if (source == null) {throw new TypeError();}for (var key in source) {if (hasOwn.call(source, key) && !hasOwn.call(exclusion, key)) {rest[key] = source[key];}}return rest;})($__0,{pattern:1,size:1,placeholder:1})
+    var patternLength = this.mask.pattern.length
     return React.createElement("input", React.__spread({},  props, 
-      {maxLength: pattern.length, 
+      {maxLength: patternLength, 
       onChange: this._onChange, 
       onKeyDown: this._onKeyDown, 
       onKeyPress: this._onKeyPress, 
       onPaste: this._onPaste, 
-      size: size || pattern.length, 
-      value: this.mask.getValue()})
+      placeholder: placeholder || this.mask.emptyValue, 
+      size: size || patternLength, 
+      value: this._getDisplayValue()})
     )
   }
 })
@@ -131,49 +144,125 @@ function copy(obj) {
   return extend({}, obj)
 }
 
-// XXX Looks like the guts of a Pattern object?
-
 var PLACEHOLDER = '_'
-
-var ALPHANNUMERIC = '*'
-var DIGIT = '1'
-var LETTER = 'A'
+var ESCAPE_CHAR = '\\'
 
 var DIGIT_RE = /^\d$/
 var LETTER_RE = /^[A-Za-z]$/
 var ALPHANNUMERIC_RE = /^[\dA-Za-z]$/
 
-function isFormatCharacter(char) {
-  return char === DIGIT || char === LETTER || char === ALPHANNUMERIC
+var DEFAULT_FORMAT_CHARACTERS = {
+  '*': {
+    validate: function(char) { return ALPHANNUMERIC_RE.test(char) }
+  },
+  '1': {
+    validate: function(char) { return DIGIT_RE.test(char) }
+  },
+  'A': {
+    validate: function(char) { return LETTER_RE.test(char) }
+  }
 }
 
-function isValidCharacter(char, format) {
-  if (format === DIGIT) { return DIGIT_RE.test(char) }
-  if (format === LETTER) { return LETTER_RE.test(char) }
-  if (format === ALPHANNUMERIC) { return ALPHANNUMERIC_RE.test(char) }
-  throw new Error('Unknown format character: ' + format)
+function Pattern(source) {
+  if (!(this instanceof Pattern)) { return new Pattern(source) }
+
+  /** Editable format character validators. */
+  this.formatCharacters = DEFAULT_FORMAT_CHARACTERS
+  /** Pattern definition string with escape characters. */
+  this.source = source
+  /** Pattern characters after escape characters have been processed. */
+  this.pattern = []
+  /** Length of the pattern after escape characters have been processed. */
+  this.length = 0
+  /** Index of the first editable character. */
+  this.firstEditableIndex = null
+  /** Index of the last editable character. */
+  this.lastEditableIndex = null
+
+  /** Lookup for indices of editable characters in the pattern. */
+  this._editableIndices = {}
+
+  this._parse()
 }
 
-function formatValueToPattern(value, pattern) {
-  var valueBuffer = new Array(pattern.length)
+Pattern.prototype._parse = function parse() {
+  var sourceChars = this.source.split('')
+  var patternIndex = 0
+  var pattern = []
+
+  for (var i = 0, l = sourceChars.length; i < l; i++) {
+    var char = sourceChars[i]
+    if (char === ESCAPE_CHAR) {
+      if (i === l - 1) {
+        throw new Error('InputMask: pattern ends with a raw ' + ESCAPE_CHAR)
+      }
+      char = sourceChars[++i]
+    }
+    else if (char in this.formatCharacters) {
+      if (this.firstEditableIndex === null) {
+        this.firstEditableIndex = patternIndex
+      }
+      this.lastEditableIndex = patternIndex
+      this._editableIndices[patternIndex] = true
+    }
+
+    pattern.push(char)
+    patternIndex++
+  }
+
+  if (this.firstEditableIndex === null) {
+    throw new Error(
+      'InputMask: pattern "' + this.source + '" does not contain any editable characters.'
+    )
+  }
+
+  this.pattern = pattern
+  this.length = pattern.length
+}
+
+/**
+ * @param {Array<string>} value
+ * @return {Array<string>}
+ */
+Pattern.prototype.formatValue = function format(value) {
+  var valueBuffer = new Array(this.length)
   var valueIndex = 0
-  for (var i = 0, l = pattern.length; i < l ; i++) {
-    if (isFormatCharacter(pattern[i])) {
-      valueBuffer[i] = value.length > valueIndex && isValidCharacter(value[valueIndex], pattern[i])
-                       ? value[valueIndex]
-                       : PLACEHOLDER
+
+  for (var i = 0, l = this.length; i < l ; i++) {
+    if (this.isEditableIndex(i)) {
+      valueBuffer[i] = (value.length > valueIndex && this.isValidAtIndex(value[valueIndex], i)
+                        ? value[valueIndex]
+                        : PLACEHOLDER)
       valueIndex++
     }
     else {
-      valueBuffer[i] = pattern[i]
+      valueBuffer[i] = this.pattern[i]
       // Also allow the value to contain static values from the pattern by
       // advancing its index.
-      if (value.length > valueIndex && value[valueIndex] === pattern[i]) {
+      if (value.length > valueIndex && value[valueIndex] === this.pattern[i]) {
         valueIndex++
       }
     }
   }
+
   return valueBuffer
+}
+
+/**
+ * @param {number} index
+ * @return {boolean}
+ */
+Pattern.prototype.isEditableIndex = function isEditableIndex(index) {
+  return !!this._editableIndices[index]
+}
+
+/**
+ * @param {string} char
+ * @param {number} index
+ * @return {boolean}
+ */
+Pattern.prototype.isValidAtIndex = function isValidAtIndex(char, index) {
+  return this.formatCharacters[this.pattern[index]].validate(char)
 }
 
 function InputMask(options) {
@@ -211,32 +300,26 @@ InputMask.prototype.input = function input(char) {
   // If a range of characters was selected and it includes the first editable
   // character, make sure any input given is applied to it.
   if (this.selection.start !== this.selection.end &&
-      this.selection.start < this._firstEditableIndex &&
-      this.selection.end > this._firstEditableIndex) {
-    inputIndex = this._firstEditableIndex
+      this.selection.start < this.pattern.firstEditableIndex &&
+      this.selection.end > this.pattern.firstEditableIndex) {
+    inputIndex = this.pattern.firstEditableIndex
   }
 
-  var format = this.pattern[inputIndex]
-
   // Bail out or add the character to input
-  if (isFormatCharacter(format)) {
-    if (!isValidCharacter(char, format)) {
+  if (this.pattern.isEditableIndex(inputIndex)) {
+    if (!this.pattern.isValidAtIndex(char, inputIndex)) {
       return false
     }
     this.value[inputIndex] = char
-  }
-  else {
-    // The user must have placed the cursor prior to, or began a selection with,
-    // a static part of the pattern, so skip over it.
-    this.value[inputIndex] = format
   }
 
   // If multiple characters were selected, blank the remainder out based on the
   // pattern.
   var end = this.selection.end - 1
   while (end > inputIndex) {
-    format = this.pattern[end]
-    this.value[end] = isFormatCharacter(format) ? PLACEHOLDER : format
+    if (this.pattern.isEditableIndex(end)) {
+      this.value[end] = PLACEHOLDER
+    }
     end--
   }
 
@@ -245,8 +328,7 @@ InputMask.prototype.input = function input(char) {
 
   // Skip over any subsequent static characters
   while (this.pattern.length > this.selection.start &&
-         !isFormatCharacter(this.pattern[this.selection.start])) {
-    this.value[this.selection.start] = this.pattern[this.selection.start]
+         !this.pattern.isEditableIndex(this.selection.start)) {
     this.selection.start++
     this.selection.end++
   }
@@ -270,8 +352,9 @@ InputMask.prototype.backspace = function backspace() {
 
   // No range selected - work on the character preceding the cursor
   if (this.selection.start === this.selection.end) {
-    format = this.pattern[this.selection.start - 1]
-    this.value[this.selection.start - 1] = isFormatCharacter(format) ? PLACEHOLDER : format
+    if (this.pattern.isEditableIndex(this.selection.start - 1)) {
+      this.value[this.selection.start - 1] = PLACEHOLDER
+    }
     this.selection.start--
     this.selection.end--
   }
@@ -279,8 +362,9 @@ InputMask.prototype.backspace = function backspace() {
   else {
     var end = this.selection.end - 1
     while (end >= this.selection.start) {
-      format = this.pattern[end]
-      this.value[end] = isFormatCharacter(format) ? PLACEHOLDER : format
+      if (this.pattern.isEditableIndex(end)) {
+        this.value[end] = PLACEHOLDER
+      }
       end--
     }
     this.selection.end = this.selection.start
@@ -304,21 +388,21 @@ InputMask.prototype.paste = function paste(input) {
   // If there are static characters at the start of the pattern and the cursor
   // or selection is within them, the static characters must match for a valid
   // paste.
-  if (this.selection.start < this._firstEditableIndex) {
-    for (var i = 0, l = this._firstEditableIndex - this.selection.start; i < l; i++) {
-      if (input.charAt(i) !== this.pattern[i]) {
+  if (this.selection.start < this.pattern.firstEditableIndex) {
+    for (var i = 0, l = this.pattern.firstEditableIndex - this.selection.start; i < l; i++) {
+      if (input.charAt(i) !== this.pattern.pattern[i]) {
         return false
       }
     }
 
     // Continue as if the selection and input started from the editable part of
     // the pattern.
-    input = input.substring(this._firstEditableIndex - this.selection.start)
-    this.selection.start = this._firstEditableIndex
+    input = input.substring(this.pattern.firstEditableIndex - this.selection.start)
+    this.selection.start = this.pattern.firstEditableIndex
   }
 
   for (var i = 0, l = input.length;
-       i < l && this.selection.start <= this._lastEditableIndex;
+       i < l && this.selection.start <= this.pattern.lastEditableIndex;
        i++) {
     var valid = this.input(input.charAt(i))
     // Allow static parts of the pattern to appear in pasted input - they will
@@ -327,8 +411,9 @@ InputMask.prototype.paste = function paste(input) {
     if (!valid) {
       if (this.selection.start > 0) {
         // XXX This only allows for one static character to be skipped
-        var format = this.pattern[this.selection.start - 1]
-        if (!isFormatCharacter(format) && input.charAt(i) === format) {
+        var patternIndex = this.selection.start - 1
+        if (!this.pattern.isEditableIndex(patternIndex) &&
+            input.charAt(i) === this.pattern.pattern[patternIndex]) {
           continue
         }
       }
@@ -341,52 +426,35 @@ InputMask.prototype.paste = function paste(input) {
 }
 
 InputMask.prototype.setPattern = function setPattern(pattern, value) {
-  var patternChars = pattern.split('')
-  var firstEditableIndex = null
-  var lastEditableIndex = null
-  for (var i = 0, l = patternChars.length; i < l; i++) {
-    if (isFormatCharacter(patternChars[i])) {
-      if (firstEditableIndex === null) {
-        firstEditableIndex = i
-      }
-      lastEditableIndex = i
-    }
-  }
-  if (firstEditableIndex === null && lastEditableIndex === null) {
-    throw new Error(
-      'InputMask: pattern "' + pattern + '" does not contain any editable characters.'
-    )
-  }
-  this.pattern = patternChars
-  this._firstEditableIndex = firstEditableIndex
-  this._lastEditableIndex = lastEditableIndex
+  this.pattern = new Pattern(pattern)
   this.setValue(value || '')
+  this.emptyValue = this.pattern.formatValue([]).join('')
 }
 
 InputMask.prototype.setSelection = function setSelection(selection) {
   this.selection = copy(selection)
   if (this.selection.start === this.selection.end) {
-    if (this.selection.start < this._firstEditableIndex) {
-      this.selection.start = this.selection.end = this._firstEditableIndex
+    if (this.selection.start < this.pattern.firstEditableIndex) {
+      this.selection.start = this.selection.end = this.pattern.firstEditableIndex
       return true
     }
-    if (this.selection.end > this._lastEditableIndex + 1) {
-      this.selection.start = this.selection.end = this._lastEditableIndex + 1
+    if (this.selection.end > this.pattern.lastEditableIndex + 1) {
+      this.selection.start = this.selection.end = this.pattern.lastEditableIndex + 1
       return true
     }
   }
   return false
 }
 
+InputMask.prototype.setValue = function setValue(value) {
+  this.value = this.pattern.formatValue(value.split(''))
+}
+
 InputMask.prototype.getValue = function getValue() {
   return this.value.join('')
 }
 
-InputMask.prototype.setValue = function setValue(value) {
-  this.value = formatValueToPattern(value.split(''), this.pattern)
-}
-
-InputMask.formatValueToPattern = formatValueToPattern
+InputMask.Pattern = Pattern
 
 module.exports = InputMask
 },{}],3:[function(require,module,exports){
