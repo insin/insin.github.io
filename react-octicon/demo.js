@@ -46,12 +46,14 @@
 
 	'use strict';
 
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 	__webpack_require__(1);
 
 	var React = __webpack_require__(5);
 	var Octicon = __webpack_require__(6);
 
-	var NAMES = 'alert alignment-align alignment-aligned-to alignment-unalign arrow-down arrow-left arrow-right arrow-small-down arrow-small-left arrow-small-right arrow-small-up arrow-up beer book bookmark briefcase broadcast browser bug calendar check checklist chevron-down chevron-left chevron-right chevron-up circle-slash circuit-board clippy clock cloud-download cloud-upload code color-mode comment-add comment comment-discussion credit-card dash dashboard database device-camera device-camera-video device-desktop device-mobile diff diff-added diff-ignored diff-modified diff-removed diff-renamed ellipsis eye-unwatch eye-watch eye file-binary file-code file-directory file-media file-pdf file-submodule file-symlink-directory file-symlink-file file-text file-zip flame fold gear gift gist gist-secret git-branch-create git-branch-delete git-branch git-commit git-compare git-merge git-pull-request-abandoned git-pull-request globe graph heart history home horizontal-rule hourglass hubot inbox info issue-closed issue-opened issue-reopened jersey jump-down jump-left jump-right jump-up key keyboard law light-bulb link link-external list-ordered list-unordered location gist-private mirror-private git-fork-private lock logo-github mail mail-read mail-reply mark-github markdown megaphone mention microscope milestone mirror-public mirror mortar-board move-down move-left move-right move-up mute no-newline octoface organization package paintcan pencil person-add person-follow person pin playback-fast-forward playback-pause playback-play playback-rewind plug repo-create gist-new file-directory-create file-add plus podium primitive-dot primitive-square pulse puzzle question quote radio-tower repo-delete repo repo-clone repo-force-push gist-fork repo-forked repo-pull repo-push rocket rss ruby screen-full screen-normal search-save search server settings log-in sign-in log-out sign-out split squirrel star-add star-delete star steps stop repo-sync sync tag-remove tag-add tag telescope terminal three-bars thumbsdown thumbsup tools trashcan triangle-down triangle-left triangle-right triangle-up unfold unmute versions remove-close x zap'.split(' ').sort();
+	var OCTICON_NAMES = 'alert alignment-align alignment-aligned-to alignment-unalign arrow-down arrow-left arrow-right arrow-small-down arrow-small-left arrow-small-right arrow-small-up arrow-up beer book bookmark briefcase broadcast browser bug calendar check checklist chevron-down chevron-left chevron-right chevron-up circle-slash circuit-board clippy clock cloud-download cloud-upload code color-mode comment-add comment comment-discussion credit-card dash dashboard database device-camera device-camera-video device-desktop device-mobile diff diff-added diff-ignored diff-modified diff-removed diff-renamed ellipsis eye-unwatch eye-watch eye file-binary file-code file-directory file-media file-pdf file-submodule file-symlink-directory file-symlink-file file-text file-zip flame fold gear gift gist gist-secret git-branch-create git-branch-delete git-branch git-commit git-compare git-merge git-pull-request-abandoned git-pull-request globe graph heart history home horizontal-rule hourglass hubot inbox info issue-closed issue-opened issue-reopened jersey jump-down jump-left jump-right jump-up key keyboard law light-bulb link link-external list-ordered list-unordered location gist-private mirror-private git-fork-private lock logo-github mail mail-read mail-reply mark-github markdown megaphone mention microscope milestone mirror-public mirror mortar-board move-down move-left move-right move-up mute no-newline octoface organization package paintcan pencil person-add person-follow person pin playback-fast-forward playback-pause playback-play playback-rewind plug repo-create gist-new file-directory-create file-add plus podium primitive-dot primitive-square pulse puzzle question quote radio-tower repo-delete repo repo-clone repo-force-push gist-fork repo-forked repo-pull repo-push rocket rss ruby screen-full screen-normal search-save search server settings log-in sign-in log-out sign-out split squirrel star-add star-delete star steps stop repo-sync sync tag-remove tag-add tag telescope terminal three-bars thumbsdown thumbsup tools trashcan triangle-down triangle-left triangle-right triangle-up unfold unmute versions remove-close x zap'.split(' ').sort();
 
 	var App = React.createClass({
 	  displayName: 'App',
@@ -67,9 +69,21 @@
 
 	    return '<Octicon name="' + name + '"' + (mega ? ' mega' : '') + (spin ? ' spin' : '') + '/>';
 	  },
-	  render: function render() {
+	  handleCheckedChange: function handleCheckedChange(e) {
+	    this.setState(_defineProperty({}, e.target.name, e.target.checked));
+	  },
+	  handleDelayedValueChange: function handleDelayedValueChange(e) {
 	    var _this = this;
 
+	    var target = e.target;
+	    setTimeout(function () {
+	      return _this.setState(_defineProperty({}, target.name, target.value));
+	    }, 0);
+	  },
+	  handleValueChange: function handleValueChange(e) {
+	    this.setState(_defineProperty({}, e.target.name, e.target.value));
+	  },
+	  render: function render() {
 	    var _state2 = this.state;
 	    var mega = _state2.mega;
 	    var name = _state2.name;
@@ -102,10 +116,11 @@
 	        null,
 	        React.createElement(
 	          'select',
-	          { value: name, onChange: function (e) {
-	              return _this.setState({ name: e.target.value });
-	            } },
-	          NAMES.map(function (name) {
+	          { name: 'name', value: name,
+	            onChange: this.handleValueChange,
+	            onKeyDown: this.handleDelayedValueChange,
+	            onKeyUp: this.handleValueChange },
+	          OCTICON_NAMES.map(function (name) {
 	            return React.createElement(
 	              'option',
 	              null,
@@ -117,18 +132,14 @@
 	        React.createElement(
 	          'label',
 	          null,
-	          React.createElement('input', { type: 'checkbox', checked: mega, onChange: function (e) {
-	              return _this.setState({ mega: e.target.checked });
-	            } }),
+	          React.createElement('input', { type: 'checkbox', name: 'mega', checked: mega, onChange: this.handleCheckedChange }),
 	          ' mega'
 	        ),
 	        ' ',
 	        React.createElement(
 	          'label',
 	          null,
-	          React.createElement('input', { type: 'checkbox', checked: spin, onChange: function (e) {
-	              return _this.setState({ spin: e.target.checked });
-	            } }),
+	          React.createElement('input', { type: 'checkbox', name: 'spin', checked: spin, onChange: this.handleCheckedChange }),
 	          ' spin'
 	        )
 	      ),
