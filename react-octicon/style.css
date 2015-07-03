@@ -6,6 +6,7 @@ html, body {
 }
 a {
   text-decoration: none;
+  color: #00f;
 }
 code {
   font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace;
@@ -28,7 +29,7 @@ p {
       -ms-flex-pack: center;
           justify-content: center;
 }
-.App {
+.Demo {
   -webkit-box-flex: 1;
   -webkit-flex: 1;
       -ms-flex: 1;
