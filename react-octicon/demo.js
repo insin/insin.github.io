@@ -162,8 +162,7 @@
 	          'select',
 	          { name: 'name', value: name,
 	            onChange: this.handleNameChange,
-	            onKeyDown: this.handleNameChangeDelayed,
-	            onKeyUp: this.handleNameChange },
+	            onKeyDown: this.handleNameChangeDelayed },
 	          OCTICON_NAMES.map(function (name) {
 	            return React.createElement(
 	              'option',
