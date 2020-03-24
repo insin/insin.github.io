@@ -8,12 +8,12 @@ const RESOURCES = {
 "assets/FontManifest.json": "ed9cd32fa597ae46abed4ac894b9902b",
 "assets/fonts/MaterialIcons-Regular.ttf": "56d3ffdef7a25659eab6a68a3fbfaf16",
 "assets/LICENSE": "859e2bea53900ce279a2937a40cc6244",
-"favicon.png": "5dcef449791fa27946b3d35ad8803796",
-"icons/Icon-192.png": "ac9a721a12bbc803b44f645561ecb1e1",
-"icons/Icon-512.png": "96e752610906ba2a93c65f8abe1645f1",
-"index.html": "ee9df0f8ad44495ccc527178090c5dfe",
-"main.dart.js": "6e8d22d703fb06deece163d0c0e7f1da",
-"manifest.json": "bde8035bb8ee6ffe08733a199d24ada1"
+"favicon.png": "f0159985533bb53262b586282f9b281f",
+"icons/Icon-192.png": "52e334b80a74a81cd4621da8da739d2e",
+"icons/Icon-512.png": "343a77f898c4078fa86581bf512187ed",
+"index.html": "7aee80ee72a52a012e78bdd68a46a6f6",
+"main.dart.js": "87cc2ad62ccd98308912fef46221ee5e",
+"manifest.json": "a4d5514ee3a556ad4e51e139fbae8ab3"
 };
 
 self.addEventListener('activate', function (event) {
